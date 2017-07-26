@@ -11,9 +11,9 @@ R = struct('nobs_prf',empty,'nobs_tbs',empty,'Bkg_P_hPa',empty,'Bkg_T_K',empty,'
 
 
 % find output files
-out_path = C.ODVARpath;
-out_prof = [out_path '/Retrieved_Profiles.dat'];
-out_tbs =  [out_path '/Retrieved_BTs.dat'];
+out_path = C.ODVARpath_retrieval;
+out_prof = [out_path 'Retrieved_Profiles.dat'];
+out_tbs =  [out_path 'Retrieved_BTs.dat'];
 
 
 % open output files
@@ -38,13 +38,18 @@ while 1
         line = fgetl(fid_prof);
         line = fgetl(fid_prof);
         line = fgetl(fid_prof);
+        line = fgetl(fid_prof);
+        line=fgetl(fid_prof);
         if C.retrieve_LWP==1
             line = fgetl(fid_prof);
-            nite = str2num(line(30:end));
+          %  nite = str2num(line(30:end));
         else
-            nite = str2num(line(30:end));
+          %  nite = str2num(line(30:end));
         end
         
+        line = fgetl(fid_prof);
+        line = fgetl(fid_prof);  
+        nite = str2num(line(30:end));
         % fill the R structure
         R(npro).nite       = nite;
         R(npro).nobs_prf   = nobs;

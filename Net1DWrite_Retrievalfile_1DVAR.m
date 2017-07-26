@@ -4,7 +4,7 @@ function Net1DWrite_Retrievalfile_1DVAR(C,nlev)
 % inputs: C structure from the configuration file
 % nlev: number of vertical levels of the background profile
 
-fid=fopen([C.ODVARpath,'Retrieval.NL'],'w');
+fid=fopen([C.ODVARpath,'Sample_MWR/','Retrieval.NL'],'w');
 fprintf(fid,'%s \n',''); 
 fprintf(fid,'%s \n',''); 
 fprintf(fid,'%s \n','! ******** THESE COMMENTS MAY NEED TO BE REMOVED IF COMPILING ***********'); 
@@ -36,7 +36,7 @@ end
       fprintf(fid,'%s \n',' Cloud_Liquid_Water= 0,0 ');
   end
   
-fprintf(fid,'%s \n','Integrated_Water_Vapor=0,0'); 
+%fprintf(fid,'%s \n','Integrated_Water_Vapor=0,0'); 
 fprintf(fid,'%s \n','Cloud_Top_Pressure= 0,0'); 
 fprintf(fid,'%s \n','Cloud_Fraction= 0,0'); 
 fprintf(fid,'%s \n','Surface_UWind= 0,0 '); 

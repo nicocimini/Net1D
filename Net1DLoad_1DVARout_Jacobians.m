@@ -6,7 +6,7 @@
 function R = Net1DLoad_1DVARout_Jacobians(C,X)
 
 % find output files
-out_Jac = [C.ODVARpath '/RetJacobian.out'];
+out_Jac = [C.ODVARpath_retrieval '/RetJacobian.out'];
 
 % open output files
 fid_Jac = fopen(out_Jac,'r');

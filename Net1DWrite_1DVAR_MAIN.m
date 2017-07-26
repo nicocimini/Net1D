@@ -7,8 +7,8 @@ function X_new=Net1DWrite_1DVAR_MAIN(O,X,C)
 % C = structure with configuration of the 1DVar 
 
 % OPEN OUTPUT FILES FOR 1DVAR
-fid_back=fopen([C.ODVARpath,'BACKGROUND.dat'],'w');
-fid_obs=fopen([C.ODVARpath,'ObsFile.dat'],'w');
+fid_back=fopen([C.ODVARpath,'Sample_MWR/BACKGROUND.dat'],'w');
+fid_obs=fopen([C.ODVARpath,'Sample_MWR/ObsFile.dat'],'w');
 
 % how many observations to be process
 nb_obs=0;

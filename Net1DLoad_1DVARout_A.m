@@ -6,7 +6,8 @@
 function [A,Abkg] = Net1DLoad_1DVARout_A(C,X)
 
 % find output files
-out_A = [C.ODVARpath '/A-Matrix.out'];
+%out_A = [C.ODVARpath '/A-Matrix.out'];
+out_A = [C.ODVARpath_retrieval 'A-Matrix.out'];
 
 % open output files
 fid_A = fopen(out_A,'r');
@@ -15,7 +16,7 @@ npro = 0;
 while 1
     
     line = fgetl(fid_A);
-    if length(line) > 1
+    if length(line) > 12
 
     if strcmp(line(1:12),' Calculated '); % the very first one is for background of first observation (just for example?)
         

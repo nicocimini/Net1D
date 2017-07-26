@@ -11,13 +11,21 @@ function E = Net1DComp_errorbudget(C,R,B,AK,J)
 np = length(AK);
 nl = length(AK(1).AK);
 
-I = eye(nl);
+if C.retrieve_LWP
+    I = eye(nl-1);
+else
+    I = eye(nl);
+end
 Rinv = inv(R);
 Binv = inv(B);
 
 for ip = 1:np
 
-    K = J(ip).Jac; % nf * (nret*nl)
+    if C.retrieve_LWP
+        K = J(ip).Jac(:,1:end-1); % nf * (nret*nl)
+    else
+        K = J(ip).Jac;
+    end
     Kt = K';
 
     % Compute Dy (also called G) matrix
@@ -30,7 +38,11 @@ for ip = 1:np
 
     % Computing Smoothing Error covariance matrix
     % Sa = (AK - I) * B * (AK - I)t
-    Sa = (AK(ip).AK - I) * B * (AK(ip).AK - I)';
+    if ~C.retrieve_LWP
+     Sa = (AK(ip).AK - I) * B * (AK(ip).AK - I)';
+    else
+     Sa = (AK(ip).AK(1:end-1,1:end-1) - I) * B * (AK(ip).AK(1:end-1,1:end-1) - I)';   
+    end
     
     % Computing Model Error covariance matrix (YET TO BE DONE! Need to estimate Kb)
     % Kb is the Jacobian of the measurement with respect to model parameter b) 

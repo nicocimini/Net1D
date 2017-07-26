@@ -5,8 +5,30 @@
 
 function Net1DSave_1DVARout(C,O,X,R,A,E);
 
+% Pauline: save original output 1DVAR files
+out_path = [C.ODVARpath_output C.station_id '/'];
+
+if ~exist(out_path,'dir')
+    mkdir(out_path)
+end
+
+if C.GeneralMode_1DVAR < 30
+    liste_files={'Retrieved_BTs.dat','Retrieved_Profiles.dat'};
+else
+    liste_files={'Retrieved_BTs.dat','Retrieved_Profiles.dat','Minimisation_BT.log',...
+        'Minimisation.log','ProfileQC.dat','A-Matrix.out','Am-Matrix.out',...
+        'AveragingKernel.out','BgJacobian.out','RetJacobian.out'};
+end
+
+for i=1:length(liste_files)
+   fname_output=[liste_files{i}(1:end-4) '_' C.station_id '_' num2str(C.day_one(1)) twodigstr(C.day_one(2)) twodigstr(C.day_one(3))  liste_files{i}(end-3:end)];
+   command=['mv ' C.ODVARpath_retrieval liste_files{i} ' ' out_path fname_output  ];
+   [status,result] = system(command);
+end
+
+
 switch C.Output_format 
-    
+      
     case 'matlab'; 
         
           % naming output path and files

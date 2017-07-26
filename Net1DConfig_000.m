@@ -7,21 +7,24 @@
 % correction, ...). 
 % Change the progressive number (Net1DConfig_NNN.m) to keep the used Config file
 
-% Add paths
-addpath('/Users/Nico/Matools/');
-
 % Make sure C is empty
 clear C
 
 % Paths
 %C.datapath = '/Users/Nico/PROGETTI/IMAA/GAIACLIM/DATA/VO_MWR/TOPROF/'; % 2015 dataset
-C.datapath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/TOPROF/'; % 2014 dataset
-C.ODVARpath = '/Users/Nico/SFTWR/RTTOV/1DVar_K_complete_clean_v1.2/'; % main 1DVAR folder (where it runs and it writes output)
-C.ODVARpath_output = [C.datapath '1DVAR/']; % final 1DVAR output folder (where the mat output will be stored)
-C.NetCDF_output = [C.datapath 'NetCDF/']; % Netcdf output folder (where the netcdf lv1 and lv2 files will be stored)
+%C.datapath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/TOPROF/'; % 2014 dataset
 
-% This may be useful if we want to link different coefficient files
-%C.rttocoefpath='/home/martinet/rttov/rttov_visee_sol/coeffiles/';
+%directory with the input data
+C.datapath='/home/martinet/1DVAR/NET1D/DATA/TOPROF_DATA/TOPROF/';
+%C.ODVARpath = '/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/1DVar_K_complete_clean_v1.2-debugQ/';
+% directory with the 1DVAR executable
+C.ODVARpath= '/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/SAF1DVARgb/SAF1DVARgb_GIT/NWPSAF_1DVar_1.1/1DVar/';
+C.ODVARpath_retrieval='/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/SAF1DVARgb/SAF1DVARgb_GIT/NWPSAF_1DVar_1.1/1DVar/Output_MWR/';
+%directory where to save the output .mat and netcdf 1DVAR files
+C.ODVARpath_output = [C.datapath '/1DVAR/Config_001/']; % main 1DVAR folder
+
+%path to RTTOV coefficient files
+C.rttocoefpath='/home/martinet/rttov/rttov_visee_sol/coeffiles/';
 
 % Station, instrument, time, 
 C.station = 'payerne'; C.instrument = 'HATPRO'; C.channum = 14;
@@ -33,41 +36,40 @@ C.sampling = 60; % minutes
 
 % Instrument config
 C.elev_angles_how_many = 1;   % >=1
-C.elev_angles_degrees = [90]; % size of C.elev_angles_how_many
+C.elev_angles_degrees = [90 42]; % size of C.elev_angles_how_many
 C.elev_angles_channum{1} = [1:C.channum]; % size of C.elev_angles_how_many
-
+C.elev_angles_channum{2} = [11:14];
 
 % Bias correction options
 C.biascorrection = 1; % 0/1
 if C.biascorrection
-   C.biascorr_path = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/OB_bias/'; % where to get bias to be applied
+   C.biascorr_path = '/home/martinet/1DVAR/NET1D/DATA/TOPROF_DATA/OB_bias/'; % where to get bias to be applied
    C.biascorr_file = ['bias_' C.station(1:3) '_000.mat']; % add another file for updating bias correction
 end
 
 % Control variables
 C.retrieve_T = [1 1 60]; % [T/F "1st-lev within bkg profile" "how many lev from 1st-lev"]
 C.retrieve_Q = [1 1 60]; % 
-C.retrieve_LWP = [0]; % 
+C.retrieve_LWP = [1]; % 
 %C.retrieve_LWC = []; % 
 
 
 % Covariance error matrix
-C.Rdefault = 1; % 0/1 from_netcdf/default; NB: default is from Maschwitz, 2013 (Table 5)
+C.Rdefault = 1; % 0/1 from_netcdf/default;
 C.Rdiagonal = 1; % 0/1 full matrix/diagonal
 C.Roptions = [0/1 C.Rdiagonal]; % options for R:
 C.R = []; % Default R; number of channels
 C.Rcov = zeros(); % Default Rcov;
 C.Boptions = 0; % options for B: 0/1/2.. default/something else;
-C.Bpath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/Bmatrix/'; % path B (default or others);
+C.Bpath = '/home/martinet/1DVAR/NET1D/DATA/TOPROF_DATA/Bmatrix/'; % path B (default or others);
 
 
 % Sky conditions
 C.Skyconditions = 'all'; % process clear sky, cloudy sky, or other options
-C.force_bgk_clear = 1;   % force the bacground LWC to zero
+C.force_bgk_clear = 0;   % force the bacground LWC to zero
 
 % Output format and other characteristics
-%C.Output_format = 'matlab'; % either 'matlab' or 'netcdf' 
-C.Output_format = 'netcdf'; % either 'matlab' or 'netcdf' 
+C.Output_format = 'matlab'; % either 'matlab' or 'netcdf' (for future development)
 
 
 % Minimization options
@@ -93,7 +95,6 @@ switch C.station_id
     case 'sir'
           C.lat = 48.80; C.lon = 2.36; C.asl = 156;
 end
-
 
 % Section for Netcdf output file attributes
 % % Units
