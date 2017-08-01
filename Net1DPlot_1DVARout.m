@@ -5,7 +5,13 @@
 
 function Net1DPlot_1DVARout(C,O,X,R,E,A,AK,J)
 
-% to be completed
+% to be completed (and cleaned!)
+
+% Figure output path
+C.FIGSpath = [C.ODVARpath_output 'FIGS/' C.station_id '/'];
+
+% this date
+dateone = [num2str(C.day_one(1)) twodigstr(C.day_one(2)) twodigstr(C.day_one(3))]; 
 
 % level 1 data
 figure
@@ -26,12 +32,10 @@ ylabel('Height [km asl]');
 title(['AROME BCKG Ta (' C.station ') ' datestr(datenum(C.day_one))]);
 %set(get(hc,'Label'),'String','K','FontWeight','bold');
 shading flat; ylim([0 2]); xlim([0 24]); set(gca,'xtick',0:2:24);
-if ~exist([C.ODVARpath_output C.station_id '/FIGS/T/BACKGROUND/'],'dir')
-    mkdir([C.ODVARpath_output C.station_id '/FIGS/T/BACKGROUND/'])
+if ~exist([C.FIGSpath 'T/BACKGROUND/'],'dir')
+    mkdir([C.FIGSpath 'T/BACKGROUND/'])
 end
-saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/T/BACKGROUND/' C.station_id '_BACK_T_BL_20140101'],'png');
-%print(gcf,['FIGS/BL/' C.station_id '_BACK_T_20140101','.png'],'-dpng')
-
+saveas(gcf,[C.FIGSpath 'T/BACKGROUND/' C.station_id '_BACK_T_BL_' dateone],'png');
 
 % background humidite
 figure 
@@ -44,10 +48,10 @@ xlabel('Time [h]','FontSize',16);
 ylabel('Height [km asl]','FontSize',16); 
 %set(get(hc,'Label'),'String','K','FontWeight','bold');
 shading flat; ylim([0 10]); xlim([0 24]); set(gca,'xtick',0:2:24);
-if ~exist([C.ODVARpath_output C.station_id '/FIGS/Q/BACKGROUND/'],'dir')
-    mkdir([C.ODVARpath_output C.station_id '/FIGS/Q/BACKGROUND/'])
+if ~exist([C.FIGSpath 'Q/BACKGROUND/'],'dir')
+    mkdir([C.FIGSpath 'Q/BACKGROUND/'])
 end
-saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/Q/BACKGROUND/' C.station_id '_BACK_Q_20140101'],'png');
+saveas(gcf,[C.FIGSpath 'Q/BACKGROUND/' C.station_id '_BACK_Q_' dateone],'png');
 
 
 % retrieval
@@ -80,10 +84,10 @@ set(gca,'FontSize',16)
 title(['1DVAR Ret Ta (' C.station ') ' datestr(datenum(C.day_one))]);
 shading flat; ylim([0 2]); xlim([0 24]); set(gca,'xtick',0:2:24);
 %format4paper(gcf);
-if ~exist([C.ODVARpath_output C.station_id '/FIGS/T/1DVAR/'],'dir')
-    mkdir([C.ODVARpath_output C.station_id '/FIGS/T/1DVAR/'])
+if ~exist([C.FIGSpath 'T/1DVAR/'],'dir')
+    mkdir([C.FIGSpath 'T/1DVAR/'])
 end
-saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/T/1DVAR/' C.station_id '_1DVAR_T_BL_20140101'],'png');
+saveas(gcf,[C.FIGSpath 'T/1DVAR/' C.station_id '_1DVAR_T_BL_' dateone],'png');
 
 %humidite retrieval
 Ret_Q_kgkg = struct2mat(R,'Ret_Q_kgkg');
@@ -115,10 +119,10 @@ title(['1DVAR Ret Qa (' C.station ') ' datestr(datenum(C.day_one))]);
 shading flat;
 ylim([0 10]); xlim([0 24]); set(gca,'xtick',0:2:24);
 %format4paper(gcf);
-if ~exist([C.ODVARpath_output C.station_id '/FIGS/Q/1DVAR/'],'dir')
-    mkdir([C.ODVARpath_output C.station_id '/FIGS/Q/1DVAR/'])
+if ~exist([C.FIGSpath 'Q/1DVAR/'],'dir')
+    mkdir([C.FIGSpath 'Q/1DVAR/'])
 end
-saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/Q/1DVAR/' C.station_id '_1DVAR_Q_20140101'],'png');
+saveas(gcf,[C.FIGSpath 'Q/1DVAR/' C.station_id '_1DVAR_Q_' dateone],'png');
 
 % estimated error (observation, smoothing, total, ...)
 ip = 1;
@@ -137,12 +141,12 @@ plot(E(ip).QObsErr,X.Z(:,ip)/1e3,'r',E(ip).QSmtErr,X.Z(:,ip)/1e3,'b',A(ip).QTotE
 xlabel('Q [kg/kg]'); ylim([0 10]); grid on;
 set(gca,'xtick',[0:2e-4:1e-3]);
 legend('Obs','Smooth','Tot','A priori');
-if ~exist([C.ODVARpath_output C.station_id '/FIGS/ERROR/'],'dir')
-    mkdir([C.ODVARpath_output C.station_id '/FIGS/ERROR/'])
+if ~exist([C.FIGSpath 'ERROR/'],'dir')
+    mkdir([C.FIGSpath 'ERROR/'])
 end
-saveas(gcf,['FIGS/ERROR/1DVAR_Ret_err_prof'],'fig');
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone],'fig');
 %format4paper(gcf);
-saveas(gcf,['FIGS/ERROR/1DVAR_Ret_err_prof'],'png');
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone],'png');
 
 
 % From Pauline %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -159,13 +163,12 @@ if C.retrieve_T
     ylim([0 10])
     set(gca,'FontSize',16)
     title(['Averaging Kernel (' C.station ') ' datestr(datenum(C.day_one))]);
-    if ~exist([C.ODVARpath_output C.station_id '/FIGS/T/AK/'],'dir')
-        mkdir([C.ODVARpath_output C.station_id '/FIGS/T/AK/'])
+    if ~exist([C.FIGSpath 'T/AK/'],'dir')
+        mkdir([C.FIGSpath 'T/AK/'])
     end
-    saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/T/AK/' C.station_id '_AK_T_20140101'],'png');  
+    saveas(gcf,[C.FIGSpath 'T/AK/' C.station_id '_AK_T_' dateone],'png');  
 end
 
-% NB: Plots do not seem right!
 if C.retrieve_Q
    figure;
    for lev=1:C.retrieve_Q(3)
@@ -176,10 +179,10 @@ if C.retrieve_Q
     ylim([0 10])
     set(gca,'FontSize',16)
     title(['Averaging Kernel (' C.station ') ' datestr(datenum(C.day_one))]);
-    if ~exist([C.ODVARpath_output C.station_id '/FIGS/Q/AK/'],'dir')
-        mkdir([C.ODVARpath_output C.station_id '/FIGS/Q/AK/'])
+    if ~exist([C.FIGSpath 'Q/AK/'],'dir')
+        mkdir([C.FIGSpath 'Q/AK/'])
     end    
-    saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/Q/AK/' C.station_id '_AK_Q_20140101'],'png'); 
+    saveas(gcf,[C.FIGSpath 'Q/AK/' C.station_id '_AK_Q_' dateone],'png'); 
 end
 
     
@@ -193,29 +196,31 @@ if C.retrieve_T
 end    
     xlabel('T Jacobian','FontSize',16);
     ylabel('Height [km asl]','FontSize',16);
-    legend('51.26','52.28','53.86','54.94','56.66','57.3','58')
+    legend(num2str(O.channels))
     ylim([0 10])
     set(gca,'FontSize',16)
-    if ~exist([C.ODVARpath_output C.station_id '/FIGS/T/JAC/'],'dir')
-        mkdir([C.ODVARpath_output C.station_id '/FIGS/T/JAC/'])
+    if ~exist([C.FIGSpath 'T/JAC/'],'dir')
+        mkdir([C.FIGSpath 'T/JAC/'])
     end
     title(['Jacobian (' C.station ') ' datestr(datenum(C.day_one))]);
-    saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/T/JAC/' C.station_id '_AK_T_20140101'],'png');   
+    saveas(gcf,[C.FIGSpath 'T/JAC/' C.station_id '_JAC_T_' dateone],'png');   
 
 if C.retrieve_Q
    figure;
-   for lev=1:C.retrieve_Q(3)
-    plot(AK(1).AK(lev,C.retrieve_T(1)*C.retrieve_T(3)+1:C.retrieve_T(1)*C.retrieve_T(3)+C.retrieve_Q(3)),X.Z(C.retrieve_Q(2):C.retrieve_Q(2)+C.retrieve_Q(3)-1,1)/1e3,'k','Linewidth',2); hold on
+   for chan=1:C.channum
+    %plot(AK(1).AK(lev,C.retrieve_T(1)*C.retrieve_T(3)+1:C.retrieve_T(1)*C.retrieve_T(3)+C.retrieve_Q(3)),X.Z(C.retrieve_Q(2):C.retrieve_Q(2)+C.retrieve_Q(3)-1,1)/1e3,'k','Linewidth',2); hold on
+    plot(J(1).Jac(chan,C.retrieve_T(1)*C.retrieve_T(3)+1:C.retrieve_T(1)*C.retrieve_T(3)+C.retrieve_Q(3)),X.Z(C.retrieve_Q(2):C.retrieve_Q(2)+C.retrieve_Q(3)-1,1)/1e3,'k','Linewidth',2,'Color',cmap(chan,:)); hold on
    end
-    xlabel('Q Averaging Kernel','FontSize',16);
+    xlabel('Q Jacobian','FontSize',16);
     ylabel('Height [km asl]','FontSize',16);
+    legend(num2str(O.channels))
     ylim([0 10])
     set(gca,'FontSize',16)
-    title(['Averaging Kernel (' C.station ') ' datestr(datenum(C.day_one))]);
-    if ~exist([C.ODVARpath_output C.station_id '/FIGS/Q/AK/'],'dir')
-        mkdir([C.ODVARpath_output C.station_id '/FIGS/Q/AK/'])
+    title(['Jacobian (' C.station ') ' datestr(datenum(C.day_one))]);
+    if ~exist([C.FIGSpath 'Q/JAC/'],'dir')
+        mkdir([C.FIGSpath 'Q/JAC/'])
     end    
-    saveas(gcf,[C.ODVARpath_output C.station_id '/' 'FIGS/Q/AK/' C.station_id '_AK_Q_20140101'],'png');   
+    saveas(gcf,[C.FIGSpath 'Q/JAC/' C.station_id '_JAC_Q_' dateone],'png');   
 end
 
 end

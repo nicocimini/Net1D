@@ -11,20 +11,17 @@
 clear C
 
 % Paths
-%C.datapath = '/Users/Nico/PROGETTI/IMAA/GAIACLIM/DATA/VO_MWR/TOPROF/'; % 2015 dataset
-%C.datapath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/TOPROF/'; % 2014 dataset
-
-%directory with the input data
-C.datapath='/home/martinet/1DVAR/NET1D/DATA/TOPROF_DATA/TOPROF/';
-%C.ODVARpath = '/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/1DVar_K_complete_clean_v1.2-debugQ/';
-% directory with the 1DVAR executable
-C.ODVARpath= '/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/SAF1DVARgb/SAF1DVARgb_GIT/NWPSAF_1DVar_1.1/1DVar/';
-C.ODVARpath_retrieval='/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/SAF1DVARgb/SAF1DVARgb_GIT/NWPSAF_1DVar_1.1/1DVar/Output_MWR/';
+%C.rootpath = '/Users/Nico/PROGETTI/IMAA/GAIACLIM/DATA/VO_MWR/'; % 2015 dataset
+C.rootpath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/'; % 2014 dataset
+C.Confpath = 'Config_000/'; % root path for output
+C.datapath = [C.rootpath 'TOPROF/'];
+C.ODVARpath= '/Users/Nico/SFTWR/RTTOV/NWPSAF_1DVar_1.1/1DVar/'; % main 1DVAR folder
+C.ODVARpath_retrieval=[C.ODVARpath 'Output_MWR/'];
 %directory where to save the output .mat and netcdf 1DVAR files
-C.ODVARpath_output = [C.datapath '/1DVAR/Config_001/']; % main 1DVAR folder
+C.ODVARpath_output = [C.datapath '1DVAR/' C.Confpath]; 
 
 %path to RTTOV coefficient files
-C.rttocoefpath='/home/martinet/rttov/rttov_visee_sol/coeffiles/';
+%C.rttocoefpath='/home/martinet/rttov/rttov_visee_sol/coeffiles/';
 
 % Station, instrument, time, 
 C.station = 'payerne'; C.instrument = 'HATPRO'; C.channum = 14;
@@ -43,7 +40,7 @@ C.elev_angles_channum{2} = [11:14];
 % Bias correction options
 C.biascorrection = 1; % 0/1
 if C.biascorrection
-   C.biascorr_path = '/home/martinet/1DVAR/NET1D/DATA/TOPROF_DATA/OB_bias/'; % where to get bias to be applied
+   C.biascorr_path = [C.rootpath 'OB_bias/']; % where to get bias to be applied
    C.biascorr_file = ['bias_' C.station(1:3) '_000.mat']; % add another file for updating bias correction
 end
 
@@ -61,7 +58,8 @@ C.Roptions = [0/1 C.Rdiagonal]; % options for R:
 C.R = []; % Default R; number of channels
 C.Rcov = zeros(); % Default Rcov;
 C.Boptions = 0; % options for B: 0/1/2.. default/something else;
-C.Bpath = '/home/martinet/1DVAR/NET1D/DATA/TOPROF_DATA/Bmatrix/'; % path B (default or others);
+C.Bpath = [C.rootpath 'Bmatrix/']; % path B (default or others);
+C.LWPsd = 0.05; % standard deviation of background error used in the B matrix if LWP retrieved
 
 
 % Sky conditions
@@ -69,8 +67,9 @@ C.Skyconditions = 'all'; % process clear sky, cloudy sky, or other options
 C.force_bgk_clear = 0;   % force the bacground LWC to zero
 
 % Output format and other characteristics
-C.Output_format = 'matlab'; % either 'matlab' or 'netcdf' (for future development)
-
+%C.Output_format = 'matlab'; % either 'matlab' or 'netcdf' (for future development)
+C.Output_format_name = ['matlab';'netcdf';'NWPSAF'];
+C.Output_format_numb = 1:3; % Any number combination of 1(matlab), 2(netcdf), and 3(NWPSAF)
 
 % Minimization options
 C.Minimisation_Method = 'ML'; % either 'ML' for Marquard-Levenberg or 'N' for Newtonian
@@ -78,6 +77,7 @@ C.MaxIterations = 10; % Maximum number of iterations in the external loop:
 C.RTTOV_version = 'RTTOV11'; % version of RTTOV used for the retrieval: for now only 'RTTOV11' is available
 C.GeneralMode_1DVAR = 40; % 0='Operational', 10='Production', 20='Diagnostic', 30='Debug', 40='Verbose'.
 C.MissingValue = -999;
+
 
 % Station info
 C.station_id = C.station(1:3);
@@ -96,25 +96,8 @@ switch C.station_id
           C.lat = 48.80; C.lon = 2.36; C.asl = 156;
 end
 
+
 % Section for Netcdf output file attributes
-% % Units
-% C.nc.units.time = 'seconds since 1970-01-01 00:00:00 UTC';
-% C.nc.units.freq_sb = 'GHz';
-% C.nc.units.lat = 'degree_north';
-% C.nc.units.lon = 'degree_east';
-% C.nc.units.zsl = 'm';
-% % Standard name
-% C.nc.standard_name.time = 'time';
-% C.nc.standard_name.freq_sb = 'sensor_band_central_radiation_frequency';
-% C.nc.standard_name.lat = 'latitude';
-% C.nc.standard_name.lon = 'longitude';
-% C.nc.standard_name.zsl = 'altitude';
-% % Long name
-% C.nc.long_name.freq_sb = 'frequency of microwave channels';
-% C.nc.long_name.zsl = 'altitude above mean sea level';
-% % Bunds
-% C.nc.bounds.time = 'time_bnds';
-% Global attributes
 C.nc.glatt.Institution      = 'CNR-IMAA';
 C.nc.glatt.Contact_person   = 'Reprocessed data: Nico Cimini, CNR-IMAA (domenico.cimini@imaa.cnr.it). Original data: ';
 C.nc.glatt.History          = 'Data reprocessed with Net1D v1.0. Original ';
