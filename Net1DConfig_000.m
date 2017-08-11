@@ -29,7 +29,9 @@ C.station = 'payerne'; C.instrument = 'HATPRO'; C.channum = 14;
 C.day_start = [2014 1 1]; % YYYY MM dd
 C.day_end =   [2014 1 1]; % YYYY MM dd
 C.sampling = 60; % minutes
-
+C.std31fromZH = 1; % 0/1; if 0 std31 is computed from BL file, if 1 from ZH file (it slows the loading) 
+C.std31wndw = 10; % minutes
+C.std31value = 0.5; % K
 
 % Instrument config
 C.elev_angles_how_many = 1;   % >=1

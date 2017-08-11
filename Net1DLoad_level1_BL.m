@@ -1,12 +1,12 @@
-% Network 1DVAR+RTTOV retrieval: Load level1 Zenith only data
+% Network 1DVAR+RTTOV retrieval: Load level1 BL data
 %
-% Net1DLoad_level1_ZH loads Zenith only level 1 files according to Config C structure, i.e. for
+% Net1DLoad_level1_BL loads BL level 1 files according to Config C structure, i.e. for
 % different station, instrument, day,...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% HATPRO and MP3000A Zenith-only files %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HATPRO and MP3000A BL files %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [O,C] = Net1DLoad_level1_ZH(C,lv1file);
+function [O,C] = Net1DLoad_level1_BL(C,lv1file);
 
 % update C
 C.lat = ncread(lv1file,'lat'); % 'degree_north'
@@ -27,7 +27,6 @@ try O.GA.Measurement_site = ncreadatt(lv1file,'/','Measurement_site'); catch; O.
 % NC info:
 O.ncinfo = ncinfo(lv1file);
 
-
 % Find flagged data
 % for Joyce: 'Flags indicate data that the user should only use with care. In cases of doubt, please refer to the contact person. A Fillvalue of 0 means that data has not been flagged. Bands refer to the measurement ranges (if applicable) of the microwave radiometer; i.e band 1: 20-30 GHz, band 2: 50-60 GHz, band 3: 90 GHz; tb valid range: [  2.70, 330.00] in K; '
 % for Payerne: 'rain_flag radiometer_alarm; Discard data with rain_flag=1 and radiometer_alarm=1'
@@ -42,18 +41,21 @@ switch C.station_id
     case 'pay'
         badindx = find(flag == 1);
     case 'rao'
-        % For zh files, it's OK to get badindx from original flag (since ele is always 90)
-        badindx = find(flag);
+        % Nico 2017/05/25
+        % moved this within the "if strcmp(C.instrument,'MP3000A')" statement
+        % i.e. after the elevation angle resampling
+        %badindx = find(flag);
     case 'sir'
         badindx = find(not(isnan(flag)));
 end
+
 
 % load data
 time = ncread(lv1file,'time'); % 'seconds since 1970-01-01 00:00:00 UTC'
 azi = ncread(lv1file,'azi'); % '0=North, 90=East, 180=South, 270=West'
 ele = ncread(lv1file,'ele'); % 'retrieval elevation angle'
 freq = ncread(lv1file,'freq_sb'); % 'frequency of microwave channels [GHz]'
-tbs = ncread(lv1file,'tb');  % 'brightness temperature [K]' - n_freq,time
+tbs = ncread(lv1file,'tb');  % 'brightness temperature [K]' - n_freq,n_angle,time
 ta = ncread(lv1file,'ta');  % 'air_temperature [K]'
 pa = ncread(lv1file,'pa');  % 'air_pressure [Pa]'
 hur = ncread(lv1file,'hur');  % 'relative_humidity [%/100]'
@@ -66,28 +68,42 @@ freq_shift = ncread(lv1file,'freq_shift'); % 'frequency shift applied to correct
 % comment - This variable is calculated from brightness temperature observations of an internal black body whose physical temperature is known. The square root of the matrix diagonal gives the brightness temperature random error of each frequency channel. Values only valid for elevation angles larger than 20deg.
 tb_cov = ncread(lv1file,'tb_cov'); % 'error covariance matrix of brightness temperature channels' [K^2]
 
-% Should be zenith only
-elangs = unique(ele);
-azi = unique(azi);
-if length(elangs) ~= 1; disp('something is wrong with the zenith pointing'); return; end;
-ele = elangs;
 
 % This only applies to MP3000A %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if strcmp(C.instrument,'MP3000A')
+    elangs = unique(ele);
+    indx15 = find(ele==elangs(1));
+    indx90 = find(ele==elangs(2));
+    if size(elangs) ~= 2; disp('something is wrong with MP3000A scan'); return; end;
+    if size(indx15) ~= size(indx90); disp('something is wrong with MP3000A scan'); return; end;
+    time = time(indx15);
+    flag = flag(indx15) + flag(indx90); % accounting for both angles (0: none is flagged, 1: one is flagged, 2: both are flagged)
+    badindx = find(flag);
+    azi = unique(azi);
+    ele = elangs; flipud(ele); % put 90? degrees first
+    tbs2(:,1,:) = tbs(:,indx90);
+    tbs2(:,2,:) = tbs(:,indx15);
+    tbs = tbs2; clear tbs2;
+    ta = ta(indx15);
+    pa = pa(indx15);
+    hur = hur(indx15);
+    offset_tb2(:,1,:) = offset_tb(:,indx90);
+    offset_tb2(:,2,:) = offset_tb(:,indx15);
+    offset_tb = offset_tb2; clear offset_tb2;
     % load extra fields
     wl_irp = ncread(lv1file,'wl_irp'); % 'infrared pyrometer central wavelength [micrometers]'
     tb_irp = ncread(lv1file,'tb_irp'); % 'infrared pyrometer brightness temperature [K]'
     el_irp = ncread(lv1file,'ele_irp'); % 'infrared pyrometer elevation angle [degree]'
-    tb_irp = tb_irp'; 
+    tb_irp = tb_irp(indx15)';
+    el_irp = el_irp(indx15);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Maybe the following is not needed for zenith obs!
 % Other instrument specific fix %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % To be removed one day we make the provider fix these %%%%%%%%%%%%%%%%%%%%
 switch C.station_id
     case 'ces'
-          %tbs = permute(tbs,[2 1 3]); % original files switch the nchn and nang dimensions
+          tbs = permute(tbs,[2 1 3]); % original files switch the nchn and nang dimensions
     case 'joy'
 
     case 'lac'
@@ -97,29 +113,25 @@ switch C.station_id
     case 'rao'
 
     case 'sir'
-          %tbs = tbs(:,1:6,:); % discarding the observations at 0 elevation 
-          %ele(1:6) = ele(1:6) - 9*1e4; % don't know the reason...
+          tbs = tbs(:,1:6,:); % discarding the observations at 0 elevation 
+          ele(1:6) = ele(1:6) - 9*1e4; % don't know the reason...
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Discard flagged data
 time(badindx) = []; 
-tbs(:,badindx) = []; % just n_freq,time
+tbs(:,:,badindx) = []; 
 ta(badindx) = [];
 pa(badindx) = [];
 hur(badindx) = [];
-offset_tb(:,badindx) = []; % just n_freq,time
+offset_tb(:,:,badindx) = []; 
 if strcmp(C.instrument,'MP3000A')
     tb_irp(badindx) = [];
     el_irp(badindx) = [];
 end
 
-% If the original resolution is needed, then the "Select time" section may be removed.
-% However, this is used to compute a cloud flag at the reduced resolution
-% based on Tb31 at original resolution 
-% This may be done similarly within Net1DLoad_level1_BL
-
 % Select time
+%time_bnds = ncread(lv1file,'time_bnds');
 [timestr,julday,datetime] = computertime(time);
 julstep = C.sampling/1440; % minutes/(60*24)
 julgrid = floor(julday(1)) : julstep : floor(julday(1))+1; julgrid = julgrid';
@@ -147,7 +159,7 @@ std31 = ones(ngrid,1);
 for in = 1:ngrid    
     idx = idxgrid(in);
     idxwndw = find( abs (julday - julday(idx)) < julstd );    
-    std31(in) = std( tbs(chn31,idxwndw) ); % std    
+    std31(in) = std( tbs(chn31,1,idxwndw) ); % std(Tb31(90))   
 end
 cld31 = not ( not ( sign( std31-C.std31value ) + 1 ) ); % cld flag based on std
 
@@ -156,11 +168,11 @@ O.angles_az = azi; % '0=North, 90=East, 180=South, 270=West'
 O.angles_el = ele; % 'retrieval elevation angle'
 O.channels = freq; % 'frequency of microwave channels [GHz]'
 O.time = ( julday(idxgrid)-floor(julday(1)) ) * 24 * 3600; % seconds from midnight
-O.y = tbs(:,idxgrid);  % 'brightness temperature [K]' - n_freq,time
+O.y = tbs(:,:,idxgrid);  % 'brightness temperature [K]' - n_freq,n_angle,time
 O.ta = ta(idxgrid);  % 'air_temperature [K]'
 O.pa = pa(idxgrid);  % 'air_pressure [Pa]'
 O.hur = hur(idxgrid);  % 'relative_humidity [%/100]'
-O.ybias = offset_tb(:,idxgrid); % n_freq,time
+O.ybias = offset_tb(:,:,idxgrid);
 O.freq_shift = freq_shift;
 if strcmp(C.instrument,'MP3000A')
    % This only applies to MP3000A %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -177,10 +189,14 @@ if C.Rdefault == 1; % 0/1 from_netcdf/default;
     switch C.instrument
         case 'HATPRO'
              % This corresponds to the one in Netcdf from Julich
-             Rdiag = [1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    0.7000    0.5000    0.2000    0.2000    0.2000    0.2000]';
+             % Rdiag = [1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 0.7 0.5 0.2 0.2 0.2 0.2]';
+             % This corresponds to Maschwitz, 2013 (Table 5)
+             Rdiag = [1.2 1.6 1.0 0.9 1.1 1.0 1.0 1.0 0.7 0.5 0.2 0.3 0.3 0.2]';
         case 'MP3000A'
              % This is adapted from the one above (Netcdf from Julich)
-             Rdiag = [1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    0.7000    0.5000    0.2000    0.2000    0.2000    0.2000]';
+             % Rdiag = [1.0 1.0 1.0 1.0 1.0 1.0 0.7 0.5 0.2 0.2 0.2 0.2]';
+             % This is adapted from the one above (Maschwitz, 2013 (Table 5))
+             Rdiag = [1.2 1.6 1.0 1.1 1.0 1.0 0.7 0.5 0.2 0.3 0.3 0.2]';
     end
     O.Rcov = diag(Rdiag.^2); 
 else
@@ -193,4 +209,4 @@ if C.Rdiagonal == 1; % 0/1 full matrix/diagonal
 end
 
 
-return
+end
