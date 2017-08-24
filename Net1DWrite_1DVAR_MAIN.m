@@ -53,8 +53,36 @@ for t=1:length(O.time) % loop over all the observations
         Qsurf=qspec_to_ppmv(X.Q(end,idx_back));
         Qspec=qabsolue_to_qspec(X.P(:,idx_back),X.T(:,idx_back),X.Q(:,idx_back));
         
+        % definition of the input CLW profile depending on the
+        % configuration chosen
+        CLW_tempo=zeros(X.nlev,1); % default value for C.Skyconditions==1, background put to zero and large background errors
+        
+        if O.cld31(t)==1
+            if C.Skyconditions==2  % background LWP scaled by observed LWP
+                if X.LWP(idx_back)~=0
+                    CLW_tempo=X.LWC(:,idx_back)*O.LWP(t)/X.LWP(idx_back);
+                else                           
+                    r=Qspec./(1-Qspec);       % rapport de mélange en kg/kg
+                    es=6.107*10.^((7.5*(X.T(:,idx_back)-273.15))./(237.3+(X.T(:,idx_back)-273.15))); % Formule de Tétens donnant la pression de vapeur saturante en hPa
+                    e=(X.P(:,idx_back))./(1+(0.622./r)); % pression partielle de vapeur déduite de la pression et du rapport de mélange en Pa
+                    HR=100*e./(es*100); % Humidité relative en %                                       
+               %    level_maxQ=find(X.Q(:,idx_back)==max(X.Q(:,idx_back)));
+                   level_maxQ=find(HR==max(HR));
+                   CLW_tempo(level_maxQ)=1e-4;
+                   LWP_tempo=0;
+                    for lev=1:X.nlev-1
+                        LWP_tempo=LWP_tempo+(CLW_tempo(lev)+CLW_tempo(lev+1))/2 *(X.P(lev+1,idx_back)-X.P(lev,idx_back))/9.81;
+                    end          
+ 
+                   CLW_tempo=CLW_tempo*O.LWP(t)/LWP_tempo;
+                end
+            elseif C.Skyconditions==3; % we follow the background profile
+               CLW_tempo=X.LWC(:,idx_back);
+            end
+        end
+               
         % input Background file for 1DVAR
-        Net1DWrite_BACK_1DVAR(X.P(:,idx_back),X.T(:,idx_back),Qspec(:),X.LWC(:,idx_back),X.ps(idx_back),Qsurf,fid_back,nb_obs);
+        Net1DWrite_BACK_1DVAR(X.P(:,idx_back),X.T(:,idx_back),Qspec(:),CLW_tempo,X.ps(idx_back),Qsurf,fid_back,nb_obs);
 
         % input Obs file for 1DVAR
         Net1DWrite_OBS_1DVAR(squeeze(O.y(:,:,t)),C,fid_obs,nb_obs);

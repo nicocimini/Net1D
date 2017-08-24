@@ -58,6 +58,18 @@ X.P = squeeze(pa(:,:,indx3));
 X.Z = squeeze(hg(:,:,indx3));
 X.Q = squeeze(hua(:,:,indx3));
 X.LWC = squeeze(clw(:,:,indx3));
+X.LWP=zeros(length(indx3),1);
+
+% calculate liquid water content density
+LWC_density=zeros(length(X.T(:,1)),1);
+for i=1:length(indx3)
+    LWC_density=mixingratio_to_density(X.LWC(:,i),X.T(:,i),X.P(:,i),X.Q(:,i));
+    LWP_tempo=0;
+    for lev=1:length(X.LWC(:,i))-1
+        LWP_tempo=LWP_tempo+(LWC_density(lev)+LWC_density(lev+1))/2 * (X.Z(lev+1,i)-X.Z(lev,i));
+    end
+    X.LWP(i)=LWP_tempo;
+end
 
 % Flipping bottom-to-top to top-to-bottom to match 1DVAR input
 X.T = flipud(X.T);

@@ -151,8 +151,12 @@ O.idxgrid = idxgrid;
 % Here it computes the cloud flag based on std(Tb31) at the reduced resolution
 julstd = C.std31wndw/1440; % minutes/(60*24)
 switch C.instrument
-    case 'HATPRO'; chn31 = 7;
-    case 'MP3000A'; chn31 = 5; % ChECK IT! 
+    case 'HATPRO'; 
+        chn31 = 7;
+        chn23 = 2;
+    case 'MP3000A'; 
+        chn31 = 5; % ChECK IT! 
+        chn23= 2;
 end
 ngrid = length(idxgrid);
 std31 = ones(ngrid,1);
@@ -182,6 +186,15 @@ if strcmp(C.instrument,'MP3000A')
 end
 O.std31 = std31; % std of Tb31 (over C.std31wndw minutes)
 O.cld31 = cld31; % cld flag based on std31
+
+% Pauline compute LWP value from dual channel algorithm from Nico's
+% function
+LWP_values=zeros(ngrid,1);
+for i=1:ngrid
+    [V,L]=Net1DComp_LWP(tbs(chn23,1,idxgrid(i)),tbs(chn31,1,idxgrid(i)));
+    LWP_values(i)=L;
+end
+O.LWP=LWP_values;
 
 % building the R covariance matrix
 % Dafault?

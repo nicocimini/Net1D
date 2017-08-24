@@ -151,6 +151,15 @@ for in = 1:ngrid
 end
 cld31 = not ( not ( sign( std31-C.std31value ) + 1 ) ); % cld flag based on std
 
+% Pauline compute LWP value from dual channel algorithm from Nico's
+% function
+LWP_values=zeros(ngrid,1);
+for i=1:ngrid
+    [V,L]=Net1DComp_LWP(tbs(2,idxgrid(i)),tbs(7,idxgrid(i)));
+    LWP_values(i)=L;
+end
+O.LWP=LWP_values;
+
 % fill O
 O.angles_az = azi; % '0=North, 90=East, 180=South, 270=West'
 O.angles_el = ele; % 'retrieval elevation angle'

@@ -38,11 +38,13 @@ end
 saveas(gcf,[C.FIGSpath 'T/BACKGROUND/' C.station_id '_BACK_T_BL_' dateone],'png');
 
 % background humidite
+Ret_Q_kgkg = struct2mat(R,'Ret_Q_kgkg');
 figure 
 set(gcf, 'Renderer', 'zbuffer')
 pcolor(X.time/3600,X.Z(:,1)/1e3,X.Q); colorbar;
 xlabel('Time [h]'); ylabel('Height [km asl]'); 
 set(gca,'FontSize',16)
+caxis([min(min(min(X.Q)),min(min(Ret_Q_kgkg))) max(max(max(X.Q)),max(max(Ret_Q_kgkg)))])
 title(['AROME BCKG Qa (' C.station ') ' datestr(datenum(C.day_one))]);
 xlabel('Time [h]','FontSize',16); 
 ylabel('Height [km asl]','FontSize',16); 
@@ -90,7 +92,6 @@ end
 saveas(gcf,[C.FIGSpath 'T/1DVAR/' C.station_id '_1DVAR_T_BL_' dateone],'png');
 
 %humidite retrieval
-Ret_Q_kgkg = struct2mat(R,'Ret_Q_kgkg');
 nobs = struct2mat(R,'nobs_prf');
 nite = struct2mat(R,'nite');
 % remove profiles with no convergence
@@ -118,11 +119,46 @@ set(gca,'FontSize',16)
 title(['1DVAR Ret Qa (' C.station ') ' datestr(datenum(C.day_one))]);
 shading flat;
 ylim([0 10]); xlim([0 24]); set(gca,'xtick',0:2:24);
+%caxis([0 8e-3])
+caxis([min(min(min(X.Q)),min(min(Ret_Q_kgkg))) max(max(max(X.Q)),max(max(Ret_Q_kgkg)))])
 %format4paper(gcf);
 if ~exist([C.FIGSpath 'Q/1DVAR/'],'dir')
     mkdir([C.FIGSpath 'Q/1DVAR/'])
 end
 saveas(gcf,[C.FIGSpath 'Q/1DVAR/' C.station_id '_1DVAR_Q_' dateone],'png');
+
+Ret_LWP=struct2mat(R,'Ret_LWP');
+Back_LWP=struct2mat(R,'Bkg_LWP');
+Ret_LWP(noconv) = [];
+Back_LWP(noconv) = [];
+
+iadd = 0;
+for ig = 1:length(gaps)
+    ig1 = gaps(ig) + iadd;
+%    nobs = [nobs(1:ig1) NaN nobs(ig1+1:end)];
+ %   nobs = [nobs(1:ig1) nobs(ig1)+1 nobs(ig1+1:end)];
+    Ret_LWP = [Ret_LWP(1:ig1) NaN Ret_LWP(ig1+1:end)];
+    Back_LWP = [Back_LWP(1:ig1) NaN Back_LWP(ig1+1:end)];
+    iadd = iadd + 1;
+end
+
+% Liquid water path
+figure;
+plot(O.time(nobs)/3600,Ret_LWP*1000,'x-k','Linewidth',2,'MarkerSize',10);hold on
+plot(O.time(nobs)/3600,Back_LWP*1000,'x-r','Linewidth',2,'MarkerSize',10);hold on
+
+%plot(X.time/3600,X.LWP*1000,'x-r','Linewidth',2,'MarkerSize',10);hold on
+plot(O.time/3600,O.LWP*1000,'x-b','Linewidth',2,'MarkerSize',10);hold on
+xlim([0 24]); set(gca,'xtick',0:2:24);
+legend('1DVAR','Back.','MWR')
+xlabel('Time [h]','FontSize',16); 
+ylabel('Liquid water path [g/m2]','FontSize',16); 
+title(['1DVAR LWP (' C.station ') ' datestr(datenum(C.day_one))],'FontSize',16);
+set(gca,'FontSize',16)
+if ~exist([C.FIGSpath 'LWP/'],'dir')
+    mkdir([C.FIGSpath 'LWP/'])
+end
+saveas(gcf,[C.FIGSpath 'LWP/' C.station_id '_1DVAR_LWP_' dateone],'png');
 
 % estimated error (observation, smoothing, total, ...)
 ip = 1;
@@ -196,7 +232,9 @@ if C.retrieve_T
 end    
     xlabel('T Jacobian','FontSize',16);
     ylabel('Height [km asl]','FontSize',16);
-    legend(num2str(O.channels))
+    h=legend(num2str(O.channels));
+    legend boxoff
+    set(h,'FontSize',12)
     ylim([0 10])
     set(gca,'FontSize',16)
     if ~exist([C.FIGSpath 'T/JAC/'],'dir')
@@ -213,7 +251,9 @@ if C.retrieve_Q
    end
     xlabel('Q Jacobian','FontSize',16);
     ylabel('Height [km asl]','FontSize',16);
-    legend(num2str(O.channels))
+    h=legend(num2str(O.channels));
+    legend boxoff
+    set(h,'FontSize',12)    
     ylim([0 10])
     set(gca,'FontSize',16)
     title(['Jacobian (' C.station ') ' datestr(datenum(C.day_one))]);

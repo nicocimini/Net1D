@@ -38,15 +38,21 @@ while 1
         line = fgetl(fid_prof);
         line = fgetl(fid_prof);
         line = fgetl(fid_prof);
-        line = fgetl(fid_prof);
-        line=fgetl(fid_prof);
-        if C.retrieve_LWP==1
+        
+       if C.retrieve_LWP==1
             line = fgetl(fid_prof);
+            tempo=strsplit(line);
+            R(npro).Bkg_LWP=str2num(tempo{4});
+            R(npro).Ret_LWP=str2num(tempo{3});
           %  nite = str2num(line(30:end));
         else
           %  nite = str2num(line(30:end));
         end
+                
         
+        line = fgetl(fid_prof);
+        line=fgetl(fid_prof);
+ 
         line = fgetl(fid_prof);
         line = fgetl(fid_prof);  
         nite = str2num(line(30:end));
