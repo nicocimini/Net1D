@@ -13,7 +13,13 @@ if C.biascorrection
 
    % Apply bias correction
    bias_AROME_clearsky = bias_AROME_clearsky';
-   O.y = O.y - bias_AROME_clearsky; % Tb_bc = Tb_o - bias = Tb_o - (Tb_o - Tb_b) = Tb_b
+   
+  % O.y = O.y - bias_AROME_clearsky; % Tb_bc = Tb_o - bias = Tb_o - (Tb_o - Tb_b) = Tb_b
+   
+   for i=1:length(O.time); 
+       A(:,:,i)=bias_AROME_clearsky; 
+   end
+   O.y = O.y - A; % Tb_bc = Tb_o - bias = Tb_o - (Tb_o - Tb_b) = Tb_b
 
 end
 

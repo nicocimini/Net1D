@@ -20,7 +20,7 @@ if C.biascorrection; head = 'Bias corrected '; else; head = ''; end;
 xlabel('Time [h]'); ylabel([head 'Tb [K] @ ' num2str(O.channels(1)) ' GHz']); 
 title([C.instrument ' (' C.station ') ' datestr(datenum(C.day_one))]);
 
-% background temperature
+% =======background temperature==========================================
 figure;
 set(gcf, 'PaperPositionMode', 'auto')
 set(gcf, 'Renderer', 'zbuffer')
@@ -37,8 +37,8 @@ if ~exist([C.FIGSpath 'T/BACKGROUND/'],'dir')
 end
 saveas(gcf,[C.FIGSpath 'T/BACKGROUND/' C.station_id '_BACK_T_BL_' dateone],'png');
 
-% background humidite
-Ret_Q_kgkg = struct2mat(R,'Ret_Q_kgkg');
+%==================background humidite=====================================
+Ret_Q_kgkg = struct2mat(R,'Ret_Q_kgkg'); % read here to calculate the limits
 figure 
 set(gcf, 'Renderer', 'zbuffer')
 pcolor(X.time/3600,X.Z(:,1)/1e3,X.Q); colorbar;
@@ -56,13 +56,15 @@ end
 saveas(gcf,[C.FIGSpath 'Q/BACKGROUND/' C.station_id '_BACK_Q_' dateone],'png');
 
 
-% retrieval
+%=======Temperature retrieval=============================================
 Ret_T_K = struct2mat(R,'Ret_T_K');
+Back_T_K = struct2mat(R,'Bkg_T_K');
 nobs = struct2mat(R,'nobs_prf');
 nite = struct2mat(R,'nite');
 % remove profiles with no convergence
 noconv = find(nite>C.MaxIterations);
 Ret_T_K(:,noconv) = [];
+Back_T_K(:,noconv) = [];
 nobs(noconv) = [];
 % find gaps and put nans
 gaps = find(diff(nobs)>1);
@@ -71,7 +73,8 @@ for ig = 1:length(gaps)
     ig1 = gaps(ig) + iadd;
 %    nobs = [nobs(1:ig1) NaN nobs(ig1+1:end)];
     nobs = [nobs(1:ig1) nobs(ig1)+1 nobs(ig1+1:end)];
-    Ret_T_K = [Ret_T_K(:,1:ig1) NaN(X.nlev,1) Ret_T_K(:,ig1+1:end)]; 
+    Ret_T_K = [Ret_T_K(:,1:ig1) NaN(X.nlev,1) Ret_T_K(:,ig1+1:end)];
+    Back_T_K = [Back_T_K(:,1:ig1) NaN(X.nlev,1) Back_T_K(:,ig1+1:end)];
     iadd = iadd + 1;
 end
 
@@ -91,12 +94,30 @@ if ~exist([C.FIGSpath 'T/1DVAR/'],'dir')
 end
 saveas(gcf,[C.FIGSpath 'T/1DVAR/' C.station_id '_1DVAR_T_BL_' dateone],'png');
 
-%humidite retrieval
+% Increment
+figure 
+set(gcf, 'Renderer', 'zbuffer')
+pcolor(O.time(nobs)/3600,X.Z(:,1)/1e3,Ret_T_K-Back_T_K); hc = colorbar;
+xlabel('Time [h]','FontSize',16); 
+ylabel('Height [km asl]','FontSize',16); 
+shading flat; ylim([0 2]);xlim([0 24]); set(gca,'xtick',0:2:24);
+%caxis([270 280])
+%set(get(hc,'Label'),'String','K','FontWeight','bold');
+set(gca,'FontSize',16)
+title(['1DVAR Ret Ta - Back Ta (' C.station ') ' datestr(datenum(C.day_one))]);
+if ~exist([C.FIGSpath 'T/1DVAR/'],'dir')
+    mkdir([C.FIGSpath 'T/1DVAR/'])
+end
+saveas(gcf,[C.FIGSpath 'T/1DVAR/' C.station_id '_1DVAR_T_BL_Increment' dateone],'png');
+
+%===humidity retrieval=====================================================
+Back_Q_kgkg=struct2mat(R,'Bkg_Q_kgkg');
 nobs = struct2mat(R,'nobs_prf');
 nite = struct2mat(R,'nite');
 % remove profiles with no convergence
 noconv = find(nite>C.MaxIterations);
 Ret_Q_kgkg(:,noconv) = [];
+Back_Q_kgkg(:,noconv) = [];
 nobs(noconv) = [];
 % find gaps and put nans
 gaps = find(diff(nobs)>1);
@@ -106,6 +127,7 @@ for ig = 1:length(gaps)
 %    nobs = [nobs(1:ig1) NaN nobs(ig1+1:end)];
     nobs = [nobs(1:ig1) nobs(ig1)+1 nobs(ig1+1:end)];
     Ret_Q_kgkg = [Ret_Q_kgkg(:,1:ig1) NaN(X.nlev,1) Ret_Q_kgkg(:,ig1+1:end)]; 
+    Back_Q_kgkg = [Back_Q_kgkg(:,1:ig1) NaN(X.nlev,1) Back_Q_kgkg(:,ig1+1:end)];
     iadd = iadd + 1;
 end
 
@@ -127,6 +149,24 @@ if ~exist([C.FIGSpath 'Q/1DVAR/'],'dir')
 end
 saveas(gcf,[C.FIGSpath 'Q/1DVAR/' C.station_id '_1DVAR_Q_' dateone],'png');
 
+% increment
+figure 
+set(gcf, 'Renderer', 'zbuffer')
+pcolor(O.time(nobs)/3600,X.Z(:,1)/1e3,Ret_Q_kgkg-Back_Q_kgkg); hc = colorbar;
+xlabel('Time [h]','FontSize',16); 
+ylabel('Height [km asl]','FontSize',16); 
+shading flat; ylim([0 10]);xlim([0 24]); set(gca,'xtick',0:2:24);
+%caxis([270 280])
+%set(get(hc,'Label'),'String','K','FontWeight','bold');
+set(gca,'FontSize',16)
+title(['1DVAR Ret Qa - Back Qa (' C.station ') ' datestr(datenum(C.day_one))]);
+if ~exist([C.FIGSpath 'Q/1DVAR/'],'dir')
+    mkdir([C.FIGSpath 'Q/1DVAR/'])
+end
+saveas(gcf,[C.FIGSpath 'Q/1DVAR/' C.station_id '_1DVAR_Q_Increment' dateone],'png');
+
+
+%====LWP retrieval ========================================================
 Ret_LWP=struct2mat(R,'Ret_LWP');
 Back_LWP=struct2mat(R,'Bkg_LWP');
 Ret_LWP(noconv) = [];
@@ -146,7 +186,6 @@ end
 figure;
 plot(O.time(nobs)/3600,Ret_LWP*1000,'x-k','Linewidth',2,'MarkerSize',10);hold on
 plot(O.time(nobs)/3600,Back_LWP*1000,'x-r','Linewidth',2,'MarkerSize',10);hold on
-
 %plot(X.time/3600,X.LWP*1000,'x-r','Linewidth',2,'MarkerSize',10);hold on
 plot(O.time/3600,O.LWP*1000,'x-b','Linewidth',2,'MarkerSize',10);hold on
 xlim([0 24]); set(gca,'xtick',0:2:24);
@@ -160,22 +199,30 @@ if ~exist([C.FIGSpath 'LWP/'],'dir')
 end
 saveas(gcf,[C.FIGSpath 'LWP/' C.station_id '_1DVAR_LWP_' dateone],'png');
 
-% estimated error (observation, smoothing, total, ...)
+% ===estimated error (observation, smoothing, total, ...)=================
 ip = 1;
 figure
 subplot(1,2,1)
-plot(E(ip).TObsErr,X.Z(:,ip)/1e3,'r',E(ip).TSmtErr,X.Z(:,ip)/1e3,'b',A(ip).TTotErr,X.Z(:,ip)/1e3,'k',sqrt(diag(X.B(1:60,1:60))),X.Z(:,ip)/1e3,'m'); 
+plot(E(ip).TObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2); hold on
+plot(E(ip).TSmtErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(A(ip).TTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); hold on
+plot(sqrt(diag(X.B(1:60,1:60))),X.Z(:,ip)/1e3,'m','Linewidth',2); 
 % hold on; plot(sqrt(diag(E(ip).SeT+E(ip).SaT)),X.Z(:,ip)/1e3,'r--'); % to verify that A(ip).TTotErr = sqrt(diag(E(ip).SeT+E(ip).SaT)
 xlabel('T [K]','FontSize',16); 
 ylabel('Height [km asl]','FontSize',16); 
 ylim([0 10]); grid on;
 set(gca,'xtick',[0:0.2:1.0]);
+set(gca,'FontSize',16)
 legend('Obs','Smooth','Tot','A priori');
 subplot(1,2,2)
-plot(E(ip).QObsErr,X.Z(:,ip)/1e3,'r',E(ip).QSmtErr,X.Z(:,ip)/1e3,'b',A(ip).QTotErr,X.Z(:,ip)/1e3,'k',sqrt(diag(X.B(61:120,61:120))),X.Z(:,ip)/1e3,'m'); 
+plot(E(ip).QObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2);hold on
+plot(E(ip).QSmtErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(A(ip).QTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); hold on
+plot(sqrt(diag(X.B(61:120,61:120))),X.Z(:,ip)/1e3,'m','Linewidth',2); 
 % hold on; plot(sqrt(diag(E(ip).SeQ+E(ip).SaQ)),X.Z(:,ip)/1e3,'r--'); % to verify that A(ip).QTotErr = sqrt(diag(E(ip).SeQ+E(ip).SaQ)
-xlabel('Q [kg/kg]'); ylim([0 10]); grid on;
+xlabel('Q [kg/kg]','FontSize',16); ylim([0 10]); grid on;
 set(gca,'xtick',[0:2e-4:1e-3]);
+set(gca,'FontSize',16)
 legend('Obs','Smooth','Tot','A priori');
 if ~exist([C.FIGSpath 'ERROR/'],'dir')
     mkdir([C.FIGSpath 'ERROR/'])
@@ -183,6 +230,48 @@ end
 saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone],'fig');
 %format4paper(gcf);
 saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone],'png');
+
+%plot one profile with error bars
+% figure;
+% plot(Ret_Q_kgkg(:,1),X.Z(:,1)/1e3,'k','Linewidth',2);hold on
+% for i=1:length(X.Z(:,1))
+%     line([Ret_Q_kgkg(i,1)-A(1).QTotErr(i)/2 Ret_Q_kgkg(i,1)+A(1).QTotErr(i)/2],[X.Z(i,1)/1e3 X.Z(i,1)/1e3],'Color','k','Linewidth',2);hold on
+% end
+% xlabel('Q [kg/kg]','FontSize',16); ylim([0 10]); grid on;
+% ylabel('Height [km asl]','FontSize',16); 
+% ylim([0 10]); grid on;
+% set(gca,'FontSize',16)
+% saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_Q' dateone],'png');
+% 
+% 
+% figure;
+% plot(Ret_T_K(:,1),X.Z(:,1)/1e3,'k','Linewidth',2);hold on
+% for i=1:length(X.Z(:,1))
+%     line([Ret_T_K(i,1)-A(1).TTotErr(i)/2 Ret_T_K(i,1)+A(1).TTotErr(i)/2],[X.Z(i,1)/1e3 X.Z(i,1)/1e3],'Color','k','Linewidth',2);hold on
+% end
+% xlabel('T [K]','FontSize',16); ylim([0 10]); grid on;
+% ylabel('Height [km asl]','FontSize',16); 
+% ylim([0 10]); grid on;
+% set(gca,'FontSize',16)
+% saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_T' dateone],'png');
+
+%==Profile with error bar================================================
+figure;
+herrorbar(Ret_T_K(:,1),X.Z(:,1)/1e3,A(1).TTotErr/2,'k')
+xlabel('T [K]','FontSize',16); 
+ylabel('Height [km asl]','FontSize',16); 
+ylim([0 10]); grid on;
+set(gca,'FontSize',16)
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_T' dateone],'png');
+
+figure;
+herrorbar(Ret_Q_kgkg(:,1),X.Z(:,1)/1e3,A(1).QTotErr/2,'k')
+xlabel('Q [kg/kg]','FontSize',16); ylim([0 10]); grid on;
+ylabel('Height [km asl]','FontSize',16); 
+ylim([0 10]); grid on;
+set(gca,'FontSize',16)
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_Q' dateone],'png');
+
 
 
 % From Pauline %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

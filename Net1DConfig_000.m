@@ -11,17 +11,13 @@
 clear C
 
 % Paths
-%C.rootpath = '/Users/Nico/PROGETTI/IMAA/GAIACLIM/DATA/VO_MWR/'; % 2015 dataset
-C.rootpath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/'; % 2014 dataset
+C.rootpath='/home/martinet/1DVAR/NET1D/DATA/';
 C.Confpath = 'Config_000/'; % root path for output
-C.datapath = [C.rootpath 'TOPROF/'];
-C.ODVARpath= '/Users/Nico/SFTWR/RTTOV/NWPSAF_1DVar_1.1/1DVar/'; % main 1DVAR folder
+C.datapath = [C.rootpath 'TOPROF_DATA/'];
+C.ODVARpath= '/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/SAF1DVARgb/SAF1DVARgb_GIT/NWPSAF_1DVar_1.1/1DVar/';
 C.ODVARpath_retrieval=[C.ODVARpath 'Output_MWR/'];
 %directory where to save the output .mat and netcdf 1DVAR files
 C.ODVARpath_output = [C.datapath '1DVAR/' C.Confpath]; 
-
-%path to RTTOV coefficient files
-%C.rttocoefpath='/home/martinet/rttov/rttov_visee_sol/coeffiles/';
 
 % Station, instrument, time, 
 C.station = 'payerne'; C.instrument = 'HATPRO'; C.channum = 14;
@@ -42,7 +38,7 @@ C.elev_angles_channum{2} = [11:14];
 % Bias correction options
 C.biascorrection = 1; % 0/1
 if C.biascorrection
-   C.biascorr_path = [C.rootpath 'OB_bias/']; % where to get bias to be applied
+   C.biascorr_path = [C.datapath 'OB_bias/']; % where to get bias to be applied
    C.biascorr_file = ['bias_' C.station(1:3) '_000.mat']; % add another file for updating bias correction
 end
 
@@ -52,7 +48,6 @@ C.retrieve_Q = [1 1 60]; %
 C.retrieve_LWP = [1]; % 
 %C.retrieve_LWC = []; % 
 
-
 % Covariance error matrix
 C.Rdefault = 1; % 0/1 from_netcdf/default;
 C.Rdiagonal = 1; % 0/1 full matrix/diagonal
@@ -60,18 +55,23 @@ C.Roptions = [0/1 C.Rdiagonal]; % options for R:
 C.R = []; % Default R; number of channels
 C.Rcov = zeros(); % Default Rcov;
 C.Boptions = 0; % options for B: 0/1/2.. default/something else;
-C.Bpath = [C.rootpath 'Bmatrix/']; % path B (default or others);
-C.LWPsd = 0.05; % standard deviation of background error used in the B matrix if LWP retrieved
-
+C.Bpath = [C.datapath 'Bmatrix/']; % path B (default or others);
+C.LWPsd = 0.05; % standard deviation of background error used in the B matrix if LWP retrieved in kg/m2
 
 % Sky conditions
-C.Skyconditions = 'all'; % process clear sky, cloudy sky, or other options
-C.force_bgk_clear = 0;   % force the bacground LWC to zero
+C.Skyconditions = 1; % 1 : LWC profile = 0, LWP standard deviation set to 100 g/m2
+                     % 2 : Background profile scaled with LWP value
+                     % computed from dual channel algorithm
+                     % 3: LWC profile read from the background
+if C.Skyconditions==1
+    C.LWPsd=0.1;
+end
+C.force_bgk_clear = 0;   % force the bacground LWC to zero = the last column of the 1DVAR input profile is not read by the algorithm
 
 % Output format and other characteristics
 %C.Output_format = 'matlab'; % either 'matlab' or 'netcdf' (for future development)
 C.Output_format_name = ['matlab';'netcdf';'NWPSAF'];
-C.Output_format_numb = 1:3; % Any number combination of 1(matlab), 2(netcdf), and 3(NWPSAF)
+C.Output_format_numb = [1 3]; % Any number combination of 1(matlab), 2(netcdf), and 3(NWPSAF)
 
 % Minimization options
 C.Minimisation_Method = 'ML'; % either 'ML' for Marquard-Levenberg or 'N' for Newtonian
