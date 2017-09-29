@@ -19,7 +19,7 @@ listofiles_BL = dir([lv1path lv1head_BL lv1date '*']);
 
 % If file do not exist, return
 if isempty(listofiles) & isempty(listofiles_BL);
-    O.y = ['no file']; % FixMe: null output
+    O.content = ['No lv1']; % Exit with null output
     return
 end
 
@@ -47,9 +47,7 @@ else
       C.elev_angles_how_many = 1;
       C.elev_angles_degrees = 90;
    end
-end
-disp(O.content);
-        
+end        
     
 end
 

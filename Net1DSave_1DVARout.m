@@ -7,22 +7,18 @@ function Net1DSave_1DVARout(C,O,X,R,A,E);
 
 % Save output files according to C.Output_format_numb
 
-
 % Loop on output formats
 for numb = C.Output_format_numb
     
     Output_format = C.Output_format_name(numb,:);
-    % Create folder if not existing
     out_path = [C.ODVARpath_output Output_format '/' C.station_id '/'];
-    if ~exist(out_path,'dir')
-       mkdir(out_path)
-    end
 
     switch Output_format 
  
     case 'NWPSAF'; % save original output 1DVAR files
         
         % Move ascii files from original dir to output dir
+        if ~exist(out_path,'dir'); mkdir(out_path); end;
         if C.GeneralMode_1DVAR < 30
             liste_files={'Retrieved_BTs.dat','Retrieved_Profiles.dat'};
         else
@@ -40,26 +36,29 @@ for numb = C.Output_format_numb
     case 'matlab'; % save in matlab format
         
           % naming output path and files
-          %out_path = [C.ODVARpath_output C.station_id '/'];
+          if ~exist(out_path,'dir'); mkdir(out_path); end;
           out_file = ['Net1D_output_' num2str(C.day_one(1)) twodigstr(C.day_one(2)) twodigstr(C.day_one(3))];
           save([out_path out_file '.mat'],'C','X','R','A','E');
         
     case 'netcdf' % save in HDCP2 netcdf format
 
+          out_path_lv1 = [C.ODVARpath_output Output_format '/level1/' C.station_id '/'];
+          
           % lev1
           indx = strfind(O.ncinfo.Filename,'/');
-          %out_path_lv1 = [C.NetCDF_output 'level1/' C.station_id '/'];
-          out_path_lv1 = [out_path 'level1/']; 
           if ~exist(out_path_lv1,'dir'); mkdir(out_path_lv1); end
           out_file_lv1 = O.ncinfo.Filename(indx(end)+1:end);
-          Net1DSave_netcdflv1([out_path_lv1 out_file_lv1],C,O);
+          ncoutputfile = [out_path_lv1 out_file_lv1];
+          if exist(ncoutputfile); delete(ncoutputfile); end; % delete lv1 netcdf file if already exists
+          Net1DSave_netcdflv1(ncoutputfile,C,O);
           
           % lev2
           out_path_lv2 = strrep(out_path_lv1,'level1','level2');
           if ~exist(out_path_lv2,'dir'); mkdir(out_path_lv2); end
           out_file_lv2 = strrep(out_file_lv1,'l1','l2');
+          ncoutputfile = [out_path_lv2 out_file_lv2];
           % root filename changes inside for different output files (ta, hua, ...)
-          Net1DSave_netcdflv2([out_path_lv2 out_file_lv2],C,O,X,R,A);
+          Net1DSave_netcdflv2(ncoutputfile,C,O,X,R,A);
         
     end
     

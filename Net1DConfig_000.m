@@ -10,20 +10,27 @@
 % Make sure C is empty
 clear C
 
+% Station, instrument, time, 
+C.station = 'lacros'; C.instrument = 'HATPRO'; C.channum = 14;
+%C.station = 'rao'; C.instrument = 'MP3000A'; C.channum = 12;
+C.station_id = C.station(1:3);
+
 % Paths
-C.rootpath='/home/martinet/1DVAR/NET1D/DATA/';
+%C.rootpath = '/Users/Nico/PROGETTI/IMAA/GAIACLIM/DATA/VO_MWR/'; % 2015 dataset
+C.rootpath = '/Users/Nico/PROGETTI/TOPROF/SCIENCE/O-B/DATA/'; % 2014 dataset
 C.Confpath = 'Config_000/'; % root path for output
-C.datapath = [C.rootpath 'TOPROF_DATA/'];
-C.ODVARpath= '/home/martinet/1DVAR/NWP_SAF/1DVAR_MWR/SAF1DVARgb/SAF1DVARgb_GIT/NWPSAF_1DVar_1.1/1DVar/';
+C.datapath = [C.rootpath 'TOPROF/'];
+C.ODVARpath= '/Users/Nico/SFTWR/RTTOV/NWPSAF_1DVar_1.1/1DVar/'; % main 1DVAR folder
 C.ODVARpath_retrieval=[C.ODVARpath 'Output_MWR/'];
 %directory where to save the output .mat and netcdf 1DVAR files
 C.ODVARpath_output = [C.datapath '1DVAR/' C.Confpath]; 
+C.Configoutpath = [C.ODVARpath_output 'Config/' C.station_id '/'];
 
-% Station, instrument, time, 
-C.station = 'payerne'; C.instrument = 'HATPRO'; C.channum = 14;
-%C.station = 'rao'; C.instrument = 'MP3000A'; C.channum = 12;
-C.day_start = [2014 1 1]; % YYYY MM dd
-C.day_end =   [2014 1 1]; % YYYY MM dd
+% Time period
+%C.day_start = [2014 1 1]; % YYYY MM dd
+%C.day_end =   [2014 1 2]; % YYYY MM dd
+C.dates2proc = load([C.datapath 'Dates2Proc_' C.station_id '.txt']);
+C.dayindx = datenum(C.dates2proc);
 C.sampling = 60; % minutes
 C.std31fromZH = 1; % 0/1; if 0 std31 is computed from BL file, if 1 from ZH file (it slows the loading) 
 C.std31wndw = 10; % minutes
@@ -48,6 +55,7 @@ C.retrieve_Q = [1 1 60]; %
 C.retrieve_LWP = [1]; % 
 %C.retrieve_LWC = []; % 
 
+
 % Covariance error matrix
 C.Rdefault = 1; % 0/1 from_netcdf/default;
 C.Rdiagonal = 1; % 0/1 full matrix/diagonal
@@ -58,7 +66,9 @@ C.Boptions = 0; % options for B: 0/1/2.. default/something else;
 C.Bpath = [C.datapath 'Bmatrix/']; % path B (default or others);
 C.LWPsd = 0.05; % standard deviation of background error used in the B matrix if LWP retrieved in kg/m2
 
+
 % Sky conditions
+%C.Skyconditions = 'all'; % process clear sky, cloudy sky, or other options
 C.Skyconditions = 1; % 1 : LWC profile = 0, LWP standard deviation set to 100 g/m2
                      % 2 : Background profile scaled with LWP value
                      % computed from dual channel algorithm
@@ -66,12 +76,12 @@ C.Skyconditions = 1; % 1 : LWC profile = 0, LWP standard deviation set to 100 g/
 if C.Skyconditions==1
     C.LWPsd=0.1;
 end
-C.force_bgk_clear = 0;   % force the bacground LWC to zero = the last column of the 1DVAR input profile is not read by the algorithm
+C.force_bgk_clear = 0;   % force the bacground LWC to zero
 
 % Output format and other characteristics
 %C.Output_format = 'matlab'; % either 'matlab' or 'netcdf' (for future development)
 C.Output_format_name = ['matlab';'netcdf';'NWPSAF'];
-C.Output_format_numb = [1 3]; % Any number combination of 1(matlab), 2(netcdf), and 3(NWPSAF)
+C.Output_format_numb = 1:3; % Any number combination of 1(matlab), 2(netcdf), and 3(NWPSAF)
 
 % Minimization options
 C.Minimisation_Method = 'ML'; % either 'ML' for Marquard-Levenberg or 'N' for Newtonian
@@ -82,7 +92,6 @@ C.MissingValue = -999;
 
 
 % Station info
-C.station_id = C.station(1:3);
 switch C.station_id
     case 'ces'
           C.lat = 51.97; C.lon = 4.93; C.asl = -0.7;
@@ -97,7 +106,6 @@ switch C.station_id
     case 'sir'
           C.lat = 48.80; C.lon = 2.36; C.asl = 156;
 end
-
 
 % Section for Netcdf output file attributes
 C.nc.glatt.Institution      = 'CNR-IMAA';

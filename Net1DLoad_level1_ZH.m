@@ -19,7 +19,7 @@ O.GA.Contact_person = ncreadatt(lv1file,'/','Contact_person');
 O.GA.Source = ncreadatt(lv1file,'/','Source');
 O.GA.History = ncreadatt(lv1file,'/','History');
 O.GA.Conventions = ncreadatt(lv1file,'/','Conventions');
-O.GA.Processing_date = ncreadatt(lv1file,'/','Processing_date');
+try O.GA.Processing_date = ncreadatt(lv1file,'/','Processing_date'); catch; O.GA.Processing_date = ' '; end;
 O.GA.Author = ncreadatt(lv1file,'/','Author');
 try O.GA.Comments = ncreadatt(lv1file,'/','Comments'); catch; O.GA.Comments = ' '; end;
 try O.GA.License = ncreadatt(lv1file,'/','License'); catch; O.GA.License = ncreadatt(lv1file,'/','Licence'); end;
@@ -66,11 +66,6 @@ freq_shift = ncread(lv1file,'freq_shift'); % 'frequency shift applied to correct
 % comment - This variable is calculated from brightness temperature observations of an internal black body whose physical temperature is known. The square root of the matrix diagonal gives the brightness temperature random error of each frequency channel. Values only valid for elevation angles larger than 20deg.
 tb_cov = ncread(lv1file,'tb_cov'); % 'error covariance matrix of brightness temperature channels' [K^2]
 
-% Should be zenith only
-elangs = unique(ele);
-azi = unique(azi);
-if length(elangs) ~= 1; disp('something is wrong with the zenith pointing'); return; end;
-ele = elangs;
 
 % This only applies to MP3000A %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if strcmp(C.instrument,'MP3000A')
@@ -87,7 +82,8 @@ end
 % To be removed one day we make the provider fix these %%%%%%%%%%%%%%%%%%%%
 switch C.station_id
     case 'ces'
-          %tbs = permute(tbs,[2 1 3]); % original files switch the nchn and nang dimensions
+          %tbs = permute(tbs,[2 1 3]);             % original files switch the nchn and nang dimensions
+          %offset_tb = permute(offset_tb,[2 1 3]); % original files switch the nchn and nang dimensions
     case 'joy'
 
     case 'lac'
@@ -102,13 +98,31 @@ switch C.station_id
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Should be zenith only
+elangs = unique(ele);
+azi = unique(azi);
+if length(elangs) ~= 1; 
+    disp('Multiple elevation angles in ZH file: forcing near-zenith to zenith'); 
+    % forcing near-zenith obs to be treated as at zenith
+    indx = find(abs(ele-90)<0.5); ele(indx) = 90; 
+    elangs = unique(ele);
+end
+if length(elangs) ~= 1; 
+    disp('Multiple elevation angles in ZH file: removing non-zenith observations'); 
+    % flag off-zenith obs
+    indx = find(ele~=90); 
+    badindx = unique([badindx; indx]);
+end
+
 % Discard flagged data
 time(badindx) = []; 
 tbs(:,badindx) = []; % just n_freq,time
+flag(badindx) = [];
 ta(badindx) = [];
 pa(badindx) = [];
 hur(badindx) = [];
 offset_tb(:,badindx) = []; % just n_freq,time
+ele(badindx) = []; ele = unique(ele);
 if strcmp(C.instrument,'MP3000A')
     tb_irp(badindx) = [];
     el_irp(badindx) = [];

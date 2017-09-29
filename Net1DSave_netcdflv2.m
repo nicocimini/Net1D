@@ -50,6 +50,7 @@ function Net1DSave_netcdflv2_hua(l1outputfile,C,O,X,R,A);
 
 % Change output name (to do for each variable/file, e.g. hua, ipwv,...)
 ncoutputfile = strrep(l1outputfile,'tb','hua');
+if exist(ncoutputfile); delete(ncoutputfile); end; % delete lv2 netcdf file if already exists
 
 % Select variables to write
 % Variables to be written in the lev2 netcdf file
@@ -144,6 +145,7 @@ function Net1DSave_netcdflv2_ta(l1outputfile,C,O,X,R,A);
 
 % Change output name (to do for each variable/file, e.g. hua, ipwv,...)
 ncoutputfile = strrep(l1outputfile,'tb','ta');
+if exist(ncoutputfile); delete(ncoutputfile); end; % delete lv2 netcdf file if already exists
 
 % Select variables to write
 % Variables to be written in the lev2 netcdf file
