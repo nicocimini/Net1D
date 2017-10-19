@@ -50,22 +50,24 @@ for t=1:length(O.time) % loop over all the observations
         X.ObsMatch(t)=idx_back;
         nb_obs=nb_obs+1;
         %computation of surface humidity in ppmv for 1DVAR
-        Qsurf=qspec_to_ppmv(X.Q(end,idx_back));
+        %Qsurf=qspec_to_ppmv(X.Q(end,idx_back));  % Modified after checking with Pauline (see email of 2017/10/19) 
         Qspec=qabsolue_to_qspec(X.P(:,idx_back),X.T(:,idx_back),X.Q(:,idx_back));
+        Qsurf=qspec_to_ppmv(Qspec(end));          % Modified after checking with Pauline (see email of 2017/10/19)
         
         % definition of the input CLW profile depending on the
         % configuration chosen
-        CLW_tempo=zeros(X.nlev,1); % default value for C.Skyconditions==1, background put to zero and large background errors
+         % default value for C.Skyconditions==1, background put to zero and large background errors
         
         if O.cld31(t)==1
+            CLW_tempo=zeros(X.nlev,1);
             if C.Skyconditions==2  % background LWP scaled by observed LWP
                 if X.LWP(idx_back)~=0
                     CLW_tempo=X.LWC(:,idx_back)*O.LWP(t)/X.LWP(idx_back);
                 else                           
-                    r=Qspec./(1-Qspec);       % rapport de mélange en kg/kg
-                    es=6.107*10.^((7.5*(X.T(:,idx_back)-273.15))./(237.3+(X.T(:,idx_back)-273.15))); % Formule de Tétens donnant la pression de vapeur saturante en hPa
-                    e=(X.P(:,idx_back))./(1+(0.622./r)); % pression partielle de vapeur déduite de la pression et du rapport de mélange en Pa
-                    HR=100*e./(es*100); % Humidité relative en %                                       
+                    r=Qspec./(1-Qspec);       % rapport de m??lange en kg/kg
+                    es=6.107*10.^((7.5*(X.T(:,idx_back)-273.15))./(237.3+(X.T(:,idx_back)-273.15))); % Formule de T??tens donnant la pression de vapeur saturante en hPa
+                    e=(X.P(:,idx_back))./(1+(0.622./r)); % pression partielle de vapeur d??duite de la pression et du rapport de m??lange en Pa
+                    HR=100*e./(es*100); % Humidit?? relative en %                                       
                %    level_maxQ=find(X.Q(:,idx_back)==max(X.Q(:,idx_back)));
                    CLW_tempo(HR==max(HR))=1e-8;
                    LWP_tempo=0;
@@ -78,13 +80,15 @@ for t=1:length(O.time) % loop over all the observations
             elseif C.Skyconditions==3; % we follow the background profile
                CLW_tempo=X.LWC(:,idx_back);
               if X.LWP(idx_back)<1e-8
-                   r=Qspec./(1-Qspec);       % rapport de mélange en kg/kg
-                   es=6.107*10.^((7.5*(X.T(:,idx_back)-273.15))./(237.3+(X.T(:,idx_back)-273.15))); % Formule de Tétens donnant la pression de vapeur saturante en hPa
-                   e=(X.P(:,idx_back))./(1+(0.622./r)); % pression partielle de vapeur déduite de la pression et du rapport de mélange en Pa
-                   HR=100*e./(es*100); % Humidité relative en %   
+                   r=Qspec./(1-Qspec);       % rapport de m??lange en kg/kg
+                   es=6.107*10.^((7.5*(X.T(:,idx_back)-273.15))./(237.3+(X.T(:,idx_back)-273.15))); % Formule de T??tens donnant la pression de vapeur saturante en hPa
+                   e=(X.P(:,idx_back))./(1+(0.622./r)); % pression partielle de vapeur d??duite de la pression et du rapport de m??lange en Pa
+                   HR=100*e./(es*100); % Humidit?? relative en %   
                    CLW_tempo(HR==max(HR))=1e-8;
               end
             end
+        else
+            CLW_tempo=X.LWC(:,idx_back);
         end
                
         % input Background file for 1DVAR
