@@ -116,7 +116,9 @@ switch C.station_id
 
     case 'sir'
           tbs = tbs(:,1:6,:); % discarding the observations at 0 elevation 
-          ele(1:6) = ele(1:6) - 9*1e4; % don't know the reason...
+          ele = ele(1:6);     % discarding the observations at 0 elevation
+          ele = ele - 9*1e4;  % don't know the reason of this constant;
+          %ele(1:6) = ele(1:6) - 9*1e4; % don't know the reason...
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
