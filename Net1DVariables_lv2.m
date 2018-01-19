@@ -109,6 +109,15 @@ Variables(i).Attributes(2).Value = 'standard error of air_temperature';
 Variables(i).Attributes(3).Name = 'FillValue';
 Variables(i).Attributes(3).Value = '-999';
 
+i = i + 1;
+Variables(i).Name = 'ta_sys';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'K';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'systematic error of air_temperature';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+
 % for hua
 
 i = i + 1;
@@ -154,5 +163,97 @@ Variables(i).Attributes(3).Name = 'FillValue';
 Variables(i).Attributes(3).Value = '-999';
 Variables(i).Attributes(4).Name = 'comment';
 Variables(i).Attributes(4).Value = 'This variable specifies the uncertainty of hua as a function of height above ground';
+
+i = i + 1;
+Variables(i).Name = 'hua_sys';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-3';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'systematic error of absolute humidity';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'This variable specifies the systematic uncertainty of hua as a function of height above ground';
+
+i = i + 1;
+Variables(i).Name = 'prw';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-2';
+Variables(i).Attributes(2).Name = 'standard_name';
+Variables(i).Attributes(2).Value = 'atmosphere_mass_content_of_water_vapor';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'prw is the precipitable water, i.e. the vertically integrated amount of water vapor from the surface to TOA, also called Total water vapor content (TWVC)';
+
+i = i + 1;
+Variables(i).Name = 'prw_err';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-2';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'standard error of pwr';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'pwr random uncertainty';
+
+i = i + 1;
+Variables(i).Name = 'prw_sys';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-2';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'standard error of pwr';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'pwr systematic uncertainty';
+
+i = i + 1;
+Variables(i).Name = 'flag';
+Variables(i).Attributes(1).Name = 'long_name';
+Variables(i).Attributes(1).Value = 'quality control flags';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'quality control flags';
+Variables(i).Attributes(3).Name = 'flag_masks';
+Variables(i).Attributes(3).Value = '[1     2     4     8    16    32    64   128   256   512  1024]';
+Variables(i).Attributes(3).Name = 'flag_meanings';
+Variables(i).Attributes(3).Value = 'manual_filter_band_1 manual_filter_band2 manual_filter_band3 rain_flag sanity_receiver_band1 sanity_receiver_band2 sun_in_beam tb_threshold_band1 tb_threshold_band2 tb_threshold_band3 iwv_lwp_threshold';
+Variables(i).Attributes(4).Name = 'FillValue';
+Variables(i).Attributes(4).Value = '0';
+Variables(i).Attributes(5).Name = 'comment';
+Variables(i).Attributes(5).Value = 'Flags indicate data that the user should only use with care. In cases of doubt, please refer to the contact person. A Fillvalue of 0 means that data has not been flagged. Bands refer to the measurement ranges (if applicable) of the microwave radiometer; i.e band 1: 20-30 GHz, band 2: 50-60 GHz, band 3: 90 GHz; tb valid range: [  2.70, 330.00] in K; prw valid range: [   0.,  100.] in kgm-2; clwvi (zeroing not applied) valid range: [-0.2,  3.0] in kgm-2;';
+
+i = i + 1;
+Variables(i).Name = 'prw_offset';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-2';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'pwr offset based on Tb offset';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'This field is not used in GAIA-CLIM';
+
+i = i + 1;
+Variables(i).Name = 'prw_off_zenith';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-2';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'off zenith path integrated water vapor';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'This field is not used in GAIA-CLIM';
+
+i = i + 1;
+Variables(i).Name = 'prw_off_zenith_offset';
+Variables(i).Attributes(1).Name = 'units';
+Variables(i).Attributes(1).Value = 'kg m-2';
+Variables(i).Attributes(2).Name = 'long_name';
+Variables(i).Attributes(2).Value = 'prw_off_zenith offset based on Tb offset';
+Variables(i).Attributes(3).Name = 'FillValue';
+Variables(i).Attributes(3).Value = '-999';
+Variables(i).Attributes(4).Name = 'comment';
+Variables(i).Attributes(4).Value = 'This field is not used in GAIA-CLIM';
 
 return

@@ -3,7 +3,7 @@
 % Net1DLoad_save1DVARout saves output 1DVAR data according to Config C 
 % structure, i.e. for different station, day,...
 
-function Net1DSave_1DVARout(C,O,X,R,A,E);
+function Net1DSave_1DVARout(C,O,X,R,A,E,AK,J);
 
 % Save output files according to C.Output_format_numb
 
@@ -38,7 +38,7 @@ for numb = C.Output_format_numb
           % naming output path and files
           if ~exist(out_path,'dir'); mkdir(out_path); end;
           out_file = ['Net1D_output_' num2str(C.day_one(1)) twodigstr(C.day_one(2)) twodigstr(C.day_one(3))];
-          save([out_path out_file '.mat'],'C','X','R','A','E');
+          save([out_path out_file '.mat'],'C','X','R','A','E','AK','J');
         
     case 'netcdf' % save in HDCP2 netcdf format
 
@@ -58,7 +58,7 @@ for numb = C.Output_format_numb
           out_file_lv2 = strrep(out_file_lv1,'l1','l2');
           ncoutputfile = [out_path_lv2 out_file_lv2];
           % root filename changes inside for different output files (ta, hua, ...)
-          Net1DSave_netcdflv2(ncoutputfile,C,O,X,R,A);
+          Net1DSave_netcdflv2(ncoutputfile,C,O,X,R,A,E);
         
     end
     

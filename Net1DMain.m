@@ -8,7 +8,7 @@
 % https://pad.okfn.org/p/Net1D_development
 
 % Read configuration file (generates C structure)
-Config_file = 'Net1DConfig_000.m'; eval(Config_file(1:end-2)); Creset = C;
+Config_file = 'Net1DConfig_002.m'; eval(Config_file(1:end-2)); Creset = C;
 
 % Save the configuration file in the output directory
 if ~exist(C.Configoutpath,'dir'); mkdir(C.Configoutpath); end
@@ -55,14 +55,18 @@ for id = C.dayindx' % must be row vector
        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
        % Retrieve output and compute error budget
-       R = Net1DLoad_1DVARout(C,X);
+       R = Net1DLoad_1DVARout(C,X,O.time);
        AK = Net1DLoad_1DVARout_AK(C,X);
        J = Net1DLoad_1DVARout_Jacobians(C,X);
        A = Net1DLoad_1DVARout_A(C,X);
-       E = Net1DComp_errorbudget(C,O.Rcov,X.B,AK,J);
+       E = Net1DComp_errorbudget(C,O.Rcov,X.B,AK,J,O.ybias);
+       if C.retrieve_Q(1)
+          % Add IWV and relative uncertainty to R, E, and A
+          [R,A,E] = Net1DComp_IWV(C,X,R,A,E);
+       end
     
        % Save output (write Matlab, ASCII, and/or Netcdf files)
-       Net1DSave_1DVARout(C,O,X,R,A,E);
+       Net1DSave_1DVARout(C,O,X,R,A,E,AK,J);
     
        % Plotting (just for checking)
        Net1DPlot_1DVARout(C,O,X,R,E,A,AK,J);

@@ -11,7 +11,7 @@
 clear C
 
 % Station, instrument, time, 
-C.station = 'lacros'; C.instrument = 'HATPRO'; C.channum = 14;
+C.station = 'joyce'; C.instrument = 'HATPRO'; C.channum = 14;
 %C.station = 'rao'; C.instrument = 'MP3000A'; C.channum = 12;
 C.station_id = C.station(1:3);
 
@@ -32,8 +32,8 @@ C.Configoutpath = [C.ODVARpath_output 'Config/' C.station_id '/'];
 C.dates2proc = load([C.datapath 'Dates2Proc_' C.station_id '.txt']);
 C.dayindx = datenum(C.dates2proc);
 C.sampling = 60; % minutes
-C.std31fromZH = 1; % 0/1; if 0 std31 is computed from BL file, if 1 from ZH file (it slows the loading) 
-C.std31wndw = 10; % minutes
+C.std31fromZH = 0; % 0/1; if 0 std31 is computed from BL file, if 1 from ZH file (it slows the loading) 
+C.std31wndw = 60; % minutes
 C.std31value = 0.5; % K
 
 % Instrument config
@@ -48,13 +48,15 @@ if C.biascorrection
    C.biascorr_path = [C.datapath 'OB_bias/']; % where to get bias to be applied
    C.biascorr_file = ['bias_' C.station(1:3) '_000.mat']; % add another file for updating bias correction
 end
+% Default systematic uncertainty (see Net1DLoad_level1_BL/ZH)
+C.Usys_default = 1;
 
 % Control variables
 C.retrieve_T = [1 1 60]; % [T/F "1st-lev within bkg profile" "how many lev from 1st-lev"]
 C.retrieve_Q = [1 1 60]; % 
 C.retrieve_LWP = [1]; % 
 %C.retrieve_LWC = []; % 
-
+C.bkgindx = 5; % index of background profile (among the 9 extracted from Arome) - Olivier suggested #4, but since he uses python that means #5
 
 % Covariance error matrix
 C.Rdefault = 1; % 0/1 from_netcdf/default;

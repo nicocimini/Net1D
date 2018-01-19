@@ -183,7 +183,9 @@ O.y = tbs(:,idxgrid);  % 'brightness temperature [K]' - n_freq,time
 O.ta = ta(idxgrid);  % 'air_temperature [K]'
 O.pa = pa(idxgrid);  % 'air_pressure [Pa]'
 O.hur = hur(idxgrid);  % 'relative_humidity [%/100]'
-O.ybias = offset_tb(:,idxgrid); % n_freq,time
+%O.ybias = offset_tb(:,idxgrid); % n_freq,time
+%O.yoffs = offset_tb(:,:,idxgrid); % this results from offset_tb (see description above) - I don't think we need this, as it comes from site dependent O-B
+O.ybias = tb_bias;                % this results from tb_bias (see description above) - this shall be used for the systematic uncertainty of Tb
 O.freq_shift = freq_shift;
 if strcmp(C.instrument,'MP3000A')
    % This only applies to MP3000A %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -194,26 +196,64 @@ end
 O.std31 = std31; % std of Tb31 (over C.std31wndw minutes)
 O.cld31 = cld31; % cld flag based on std31
 
-% building the R covariance matrix
-% Dafault?
-if C.Rdefault == 1; % 0/1 from_netcdf/default;
+
+% Overwriting O.ybias if set to default.
+% From HDCP2 netcedf file comment: 
+% This variable is an estimate of the one-standard-deviation calibration error 
+% to be expected from an absolute system calibration, i.e. the likely systematic 
+% error of brightness temperature. As a reference see Maschwitz et al. 2013, AMT (Tab. 5). 
+% However, these numbers differ from instrument to instrument and should be adapted accordingly. 
+% Values only valid for elevation angles larger than 20deg.
+if C.Usys_default
     switch C.instrument
         case 'HATPRO'
              % This corresponds to the one in Netcdf from Julich
-             Rdiag = [1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    0.7000    0.5000    0.2000    0.2000    0.2000    0.2000]';
+             % O.ybias = [1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 0.7 0.5 0.2 0.2 0.2 0.2]';
+             % This corresponds to Maschwitz, 2013 (Table 5). I take LN2
+             % values because all considered HATPROs do not use tip cal.
+             O.ybias = [1.2 1.6 1.0 0.9 1.1 1.0 1.0 1.0 0.7 0.5 0.2 0.3 0.3 0.2]';
         case 'MP3000A'
-             % This is adapted from the one above (Netcdf from Julich)
-             Rdiag = [1.0000    1.0000    1.0000    1.0000    1.0000    1.0000    0.7000    0.5000    0.2000    0.2000    0.2000    0.2000]';
-    end
-    O.Rcov = diag(Rdiag.^2); 
-else
-    O.Rcov = tb_cov + diag(tb_bias.^2); % it's missing the forward model uncertainty
+             % tb_bias is Nan in rao lv1 files
+             % This is adapted from the Netcdf from Julich (see above)
+             % O.ybias = [1.0 1.0 1.0 1.0 1.0 1.0 0.7 0.5 0.2 0.2 0.2 0.2]';
+             % This is from Hewison 2006 (Table 3-2). I used the uncertainty 
+             % of known biases (assuming they are removed by the instrument software): 
+             % channels 1-5: TIP (Table 3-2, 6th column); channels 6-12: LN2 (Table 3-2, 4th column) 
+             O.ybias = [0.52 0.40 0.40 0.29 0.21 1.06 0.89 0.38 0.24 0.22 0.22 0.22]';
+    end    
 end
 
-% Diagonal?
-if C.Rdiagonal == 1; % 0/1 full matrix/diagonal
+% Building the R covariance matrix
+% Following Hewison 2006, R = E + F + M, where: 
+% E: measurement noise, F: modelling error, M: representativeness error
+% Default E, F, and M are taken from Hewison 2006. 
+% For site-specific values: E = tb_cov; while F and M should be estimated dinamically.
+% These correspond to Hewison 2006 (Table 4-1), evaluated on a MP3000
+Esigma = [0.17 0.12 0.11 0.13 0.21 0.18 0.15 0.17 0.18 0.19 0.54 0.18]';
+Fsigma = [0.83 0.84 0.82 0.67 0.61 1.10 0.88 0.35 0.06 0.05 0.05 0.06]';
+Msigma = [0.65 0.67 0.69 0.78 1.00 1.70 1.35 0.32 0.10 0.10 0.40 0.11]';
+if C.instrument == 'HATPRO'
+    % This corresponds to the one in Netcdf from Julich
+    % Rsigma = [1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 0.7 0.5 0.2 0.2 0.2 0.2]';
+    % This is derived from sqrt(diag(tb_cov)) from joy
+    Esigma = [0.12 0.11 0.10 0.09 0.10 0.10 0.10 0.42 0.46 0.26 0.26 0.18 0.18 0.59]';
+    % These are interpolated on HATPRO chan from MP3000 chan taken from Hewison 2006 (Table 4-1)
+    frq_HATPRO = [22.24 23.04 23.84 25.44 26.24 27.84 31.40 51.26 52.28 53.86 54.94 56.66 57.30 58.00]';
+    frq_MP3000 = [22.235 23.035 23.835 26.235 30.00 51.25 52.28 53.85 54.94 56.66 57.29 58.80]';
+    Fsigma = interp1(frq_MP3000,Fsigma,frq_HATPRO);
+    Msigma = interp1(frq_MP3000,Msigma,frq_HATPRO);
+end
+E = diag(Esigma.^2);
+F = diag(Fsigma.^2);
+M = diag(Msigma.^2);
+if ~C.Rdefault % 0/1 for netcdf/default;
+    E = tb_cov; % [K^2]
+end
+O.Rcov = E + F + M; 
+
+% Forcing R to be diagonal, if required
+if C.Rdiagonal % 0/1 for full-matrix/diagonal
    O.Rcov = diag(diag(O.Rcov));
 end
-
 
 return

@@ -24,7 +24,8 @@ title([C.instrument ' (' C.station ') ' datestr(datenum(C.day_one))]);
 figure;
 set(gcf, 'PaperPositionMode', 'auto')
 set(gcf, 'Renderer', 'zbuffer')
-pcolor(X.time/3600,X.Z(:,1)/1e3,X.T); colorbar;
+pcolor(X.time/3600,X.Z(:,1)/1e3,X.T); hc = colorbar;
+set(get(hc,'Label'),'String','K');
 set(gca,'FontSize',16)
 caxis([270 280])
 xlabel('Time [h]');
@@ -41,7 +42,8 @@ saveas(gcf,[C.FIGSpath 'T/BACKGROUND/' C.station_id '_BACK_T_BL_' dateone],'png'
 Ret_Q_kgkg = struct2mat(R,'Ret_Q_kgkg'); % read here to calculate the limits
 figure 
 set(gcf, 'Renderer', 'zbuffer')
-pcolor(X.time/3600,X.Z(:,1)/1e3,X.Q); colorbar;
+pcolor(X.time/3600,X.Z(:,1)/1e3,X.Q); hc = colorbar;
+set(get(hc,'Label'),'String','kg/kg');
 xlabel('Time [h]'); ylabel('Height [km asl]'); 
 set(gca,'FontSize',16)
 caxis([min(min(min(X.Q)),min(min(Ret_Q_kgkg))) max(max(max(X.Q)),max(max(Ret_Q_kgkg)))])
@@ -84,7 +86,7 @@ pcolor(O.time(nobs)/3600,X.Z(:,1)/1e3,Ret_T_K); hc = colorbar;
 xlabel('Time [h]','FontSize',16); 
 ylabel('Height [km asl]','FontSize',16); 
 caxis([270 280])
-%set(get(hc,'Label'),'String','K','FontWeight','bold');
+set(get(hc,'Label'),'String','K','FontWeight','bold');
 set(gca,'FontSize',16)
 title(['1DVAR Ret Ta (' C.station ') ' datestr(datenum(C.day_one))]);
 shading flat; ylim([0 2]); xlim([0 24]); set(gca,'xtick',0:2:24);
@@ -102,7 +104,7 @@ xlabel('Time [h]','FontSize',16);
 ylabel('Height [km asl]','FontSize',16); 
 shading flat; ylim([0 2]);xlim([0 24]); set(gca,'xtick',0:2:24);
 %caxis([270 280])
-%set(get(hc,'Label'),'String','K','FontWeight','bold');
+set(get(hc,'Label'),'String','K','FontWeight','bold');
 set(gca,'FontSize',16)
 title(['1DVAR Ret Ta - Back Ta (' C.station ') ' datestr(datenum(C.day_one))]);
 if ~exist([C.FIGSpath 'T/1DVAR/'],'dir')
@@ -136,7 +138,7 @@ set(gcf, 'Renderer', 'zbuffer')
 pcolor(O.time(nobs)/3600,X.Z(:,1)/1e3,Ret_Q_kgkg); hc = colorbar;
 xlabel('Time [h]','FontSize',16); 
 ylabel('Height [km asl]','FontSize',16); 
-%set(get(hc,'Label'),'String','K','FontWeight','bold');
+set(get(hc,'Label'),'String','kg/kg','FontWeight','bold');
 set(gca,'FontSize',16)
 title(['1DVAR Ret Qa (' C.station ') ' datestr(datenum(C.day_one))]);
 shading flat;
@@ -157,7 +159,7 @@ xlabel('Time [h]','FontSize',16);
 ylabel('Height [km asl]','FontSize',16); 
 shading flat; ylim([0 10]);xlim([0 24]); set(gca,'xtick',0:2:24);
 %caxis([270 280])
-%set(get(hc,'Label'),'String','K','FontWeight','bold');
+set(get(hc,'Label'),'String','kg/kg','FontWeight','bold');
 set(gca,'FontSize',16)
 title(['1DVAR Ret Qa - Back Qa (' C.station ') ' datestr(datenum(C.day_one))]);
 if ~exist([C.FIGSpath 'Q/1DVAR/'],'dir')
@@ -175,8 +177,6 @@ Back_LWP(noconv) = [];
 iadd = 0;
 for ig = 1:length(gaps)
     ig1 = gaps(ig) + iadd;
-%    nobs = [nobs(1:ig1) NaN nobs(ig1+1:end)];
- %   nobs = [nobs(1:ig1) nobs(ig1)+1 nobs(ig1+1:end)];
     Ret_LWP = [Ret_LWP(1:ig1) NaN Ret_LWP(ig1+1:end)];
     Back_LWP = [Back_LWP(1:ig1) NaN Back_LWP(ig1+1:end)];
     iadd = iadd + 1;
@@ -199,31 +199,65 @@ if ~exist([C.FIGSpath 'LWP/'],'dir')
 end
 saveas(gcf,[C.FIGSpath 'LWP/' C.station_id '_1DVAR_LWP_' dateone],'png');
 
+
+%==== IWV retrieval =======================================================
+Ret_IWV = struct2mat(R,'Ret_IWV_kgm2');
+Bkq_IWV = struct2mat(R,'Bkg_IWV_kgm2');
+Ret_IWV(noconv) = [];
+Bkq_IWV(noconv) = [];
+
+iadd = 0;
+for ig = 1:length(gaps)
+    ig1 = gaps(ig) + iadd;
+    Ret_IWV = [Ret_IWV(1:ig1) NaN Ret_IWV(ig1+1:end)];
+    Bkq_IWV = [Bkq_IWV(1:ig1) NaN Bkq_IWV(ig1+1:end)];
+    iadd = iadd + 1;
+end
+
+% IWV
+figure;
+plot(O.time(nobs)/3600,Ret_IWV,'x-k','Linewidth',2,'MarkerSize',10);hold on
+plot(O.time(nobs)/3600,Bkq_IWV,'x-r','Linewidth',2,'MarkerSize',10);hold on
+xlim([0 24]); set(gca,'xtick',0:2:24);
+legend('1DVAR','Bckgrd')
+xlabel('Time [h]','FontSize',16); 
+ylabel('IWV [kg/m^2]','FontSize',16); 
+title(['1DVAR IWV (' C.station ') ' datestr(datenum(C.day_one))],'FontSize',16);
+set(gca,'FontSize',16)
+if ~exist([C.FIGSpath 'IWV/'],'dir')
+    mkdir([C.FIGSpath 'IWV/'])
+end
+saveas(gcf,[C.FIGSpath 'IWV/' C.station_id '_1DVAR_IWV_' dateone],'png');
+
+
 % ===estimated error (observation, smoothing, total, ...)=================
 ip = 1;
 figure
 subplot(1,2,1)
-plot(E(ip).TObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2); hold on
-plot(E(ip).TSmtErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
-plot(A(ip).TTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); hold on
-plot(sqrt(diag(X.B(1:60,1:60))),X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(E(ip).TBkgErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(E(ip).TObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2); 
+plot(E(ip).TSmtErr,X.Z(:,ip)/1e3,'m','Linewidth',2); 
+%plot(sqrt(diag(X.B(1:60,1:60))),X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(A(ip).TTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); 
+plot(E(ip).TSysUnc,X.Z(:,ip)/1e3,'k-.','Linewidth',2); 
 % hold on; plot(sqrt(diag(E(ip).SeT+E(ip).SaT)),X.Z(:,ip)/1e3,'r--'); % to verify that A(ip).TTotErr = sqrt(diag(E(ip).SeT+E(ip).SaT)
 xlabel('T [K]','FontSize',16); 
 ylabel('Height [km asl]','FontSize',16); 
 ylim([0 10]); grid on;
-set(gca,'xtick',[0:0.2:1.0]);
+%set(gca,'xtick',[-0.2:0.2:1.0]);
 set(gca,'FontSize',16)
-legend('Obs','Smooth','Tot','A priori');
+legend('A priori','Obs','Smooth','Tot(rnd)','Tot(sys)');
 subplot(1,2,2)
-plot(E(ip).QObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2);hold on
-plot(E(ip).QSmtErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
-plot(A(ip).QTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); hold on
-plot(sqrt(diag(X.B(61:120,61:120))),X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(E(ip).QBkgErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(E(ip).QObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2);
+plot(E(ip).QSmtErr,X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(A(ip).QTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); 
+plot(E(ip).QSysUnc,X.Z(:,ip)/1e3,'k-.','Linewidth',2);
 % hold on; plot(sqrt(diag(E(ip).SeQ+E(ip).SaQ)),X.Z(:,ip)/1e3,'r--'); % to verify that A(ip).QTotErr = sqrt(diag(E(ip).SeQ+E(ip).SaQ)
 xlabel('Q [kg/kg]','FontSize',16); ylim([0 10]); grid on;
-set(gca,'xtick',[0:2e-4:1e-3]);
+%set(gca,'xtick',[0:2e-4:1e-3]);
 set(gca,'FontSize',16)
-legend('Obs','Smooth','Tot','A priori');
+legend('A priori','Obs','Smooth','Tot(rnd)','Tot(sys)');
 if ~exist([C.FIGSpath 'ERROR/'],'dir')
     mkdir([C.FIGSpath 'ERROR/'])
 end
@@ -231,51 +265,98 @@ saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone],'fig');
 %format4paper(gcf);
 saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone],'png');
 
-%plot one profile with error bars
-% figure;
-% plot(Ret_Q_kgkg(:,1),X.Z(:,1)/1e3,'k','Linewidth',2);hold on
-% for i=1:length(X.Z(:,1))
-%     line([Ret_Q_kgkg(i,1)-A(1).QTotErr(i)/2 Ret_Q_kgkg(i,1)+A(1).QTotErr(i)/2],[X.Z(i,1)/1e3 X.Z(i,1)/1e3],'Color','k','Linewidth',2);hold on
-% end
-% xlabel('Q [kg/kg]','FontSize',16); ylim([0 10]); grid on;
-% ylabel('Height [km asl]','FontSize',16); 
-% ylim([0 10]); grid on;
-% set(gca,'FontSize',16)
-% saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_Q' dateone],'png');
-% 
-% 
-% figure;
-% plot(Ret_T_K(:,1),X.Z(:,1)/1e3,'k','Linewidth',2);hold on
-% for i=1:length(X.Z(:,1))
-%     line([Ret_T_K(i,1)-A(1).TTotErr(i)/2 Ret_T_K(i,1)+A(1).TTotErr(i)/2],[X.Z(i,1)/1e3 X.Z(i,1)/1e3],'Color','k','Linewidth',2);hold on
-% end
-% xlabel('T [K]','FontSize',16); ylim([0 10]); grid on;
-% ylabel('Height [km asl]','FontSize',16); 
-% ylim([0 10]); grid on;
-% set(gca,'FontSize',16)
-% saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_T' dateone],'png');
-
-%==Profile with error bar================================================
-figure;
-herrorbar(Ret_T_K(:,1),X.Z(:,1)/1e3,A(1).TTotErr/2,'k')
+% The same plot, but with absolute humidity (kg/m3)
+% From specific (kg/kg) to absolute (kg/m3) humidity
+Qa = qspec_to_qabsolue(R(ip).Bkg_P_hPa*100,R(ip).Ret_T_K,R(ip).Ret_Q_kgkg);
+QBkgErr = qspec_to_qabsolue(R(ip).Bkg_P_hPa*100,R(ip).Ret_T_K,E(ip).QBkgErr);
+QObsErr = qspec_to_qabsolue(R(ip).Bkg_P_hPa*100,R(ip).Ret_T_K,E(ip).QObsErr);
+QSmtErr = qspec_to_qabsolue(R(ip).Bkg_P_hPa*100,R(ip).Ret_T_K,E(ip).QSmtErr);
+QTotErr = qspec_to_qabsolue(R(ip).Bkg_P_hPa*100,R(ip).Ret_T_K,A(ip).QTotErr);
+QSysUnc = qspec_to_qabsolue(R(ip).Bkg_P_hPa*100,R(ip).Ret_T_K,E(ip).QSysUnc);
+figure
+subplot(1,2,1)
+plot(E(ip).TBkgErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(E(ip).TObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2); 
+plot(E(ip).TSmtErr,X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(A(ip).TTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); 
+plot(E(ip).TSysUnc,X.Z(:,ip)/1e3,'k-.','Linewidth',2); 
 xlabel('T [K]','FontSize',16); 
 ylabel('Height [km asl]','FontSize',16); 
 ylim([0 10]); grid on;
+%set(gca,'xtick',[0:0.2:1.0]);
 set(gca,'FontSize',16)
+legend('A priori','Obs','Smooth','Tot(rnd)','Tot(sys)');
+subplot(1,2,2)
+plot(QBkgErr,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(QObsErr,X.Z(:,ip)/1e3,'r','Linewidth',2);
+plot(QSmtErr,X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(QTotErr,X.Z(:,ip)/1e3,'k','Linewidth',2); 
+plot(QSysUnc,X.Z(:,ip)/1e3,'k-.','Linewidth',2);
+xlabel('Q [kg/m^3]','FontSize',16); ylim([0 10]); grid on;
+%set(gca,'xtick',[0:2e-4:1e-3]);
+set(gca,'FontSize',16)
+legend('A priori','Obs','Smooth','Tot(rnd)','Tot(sys)');
+if ~exist([C.FIGSpath 'ERROR/'],'dir')
+    mkdir([C.FIGSpath 'ERROR/'])
+end
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone '_SpecHum'],'fig');
+%format4paper(gcf);
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_' dateone '_SpecHum'],'png');
+
+% Absolute humidity only, but in (g/m3)
+kgm3_to_gm3 = 1e3;
+figure
+plot(QBkgErr*kgm3_to_gm3,X.Z(:,ip)/1e3,'b','Linewidth',2); hold on
+plot(QObsErr*kgm3_to_gm3,X.Z(:,ip)/1e3,'r','Linewidth',2);
+plot(QSmtErr*kgm3_to_gm3,X.Z(:,ip)/1e3,'m','Linewidth',2); 
+plot(QTotErr*kgm3_to_gm3,X.Z(:,ip)/1e3,'k','Linewidth',2); 
+plot(QSysUnc*kgm3_to_gm3,X.Z(:,ip)/1e3,'k-.','Linewidth',2);
+xlabel('Q [g/m^3]','FontSize',16); ylim([0 10]); grid on;
+%set(gca,'xtick',[0:2e-4:1e-3]);
+set(gca,'FontSize',16)
+legend('A priori','Obs','Smooth','Tot(rnd)','Tot(sys)');
+
+
+%==Profile with error bar================================================
+ip = 1;
+figure; % Temperature
+%herrorbar(R(ip).Ret_T_K,X.Z(:,ip)/1e3,A(ip).TTotErr/2,'k'); hold on;
+errorbar(R(ip).Ret_T_K,X.Z(:,ip)/1e3,A(ip).TTotErr/2,'k','horizontal'); hold on;
+plot([R(ip).Ret_T_K-E(ip).TSysUnc R(ip).Ret_T_K+E(ip).TSysUnc],X.Z(:,ip)/1e3,'r--');
+%plot(R(ip).Ret_T_K,X.Z(:,ip)/1e3,'k',[R(ip).Ret_T_K-A(ip).TTotErr/2 R(ip).Ret_T_K+A(ip).TTotErr/2],X.Z(:,ip)/1e3,'r:');
+xlabel('T [K]','FontSize',16); 
+ylabel('Height [km asl]','FontSize',16); 
+ylim([0 10]); grid on;
+set(gca,'FontSize',16);
+legend('Rand','Syst');
+title(['1DVAR Ret T (' C.station ') ' datestr( datenum([C.day_one])+O.time(R(1).nobs_tbs)/3600/24 )]);
 saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_T' dateone],'png');
 
-figure;
-herrorbar(Ret_Q_kgkg(:,1),X.Z(:,1)/1e3,A(1).QTotErr/2,'k')
+figure; % Specific humidity (kg/kg) 
+%herrorbar(R(ip).Ret_Q_kgkg,X.Z(:,ip)/1e3,A(ip).QTotErr/2,'k'); hold on;
+errorbar(R(ip).Ret_Q_kgkg,X.Z(:,ip)/1e3,A(ip).QTotErr/2,'k','horizontal'); hold on;
+plot([R(ip).Ret_Q_kgkg-E(ip).QSysUnc R(ip).Ret_Q_kgkg+E(ip).QSysUnc],X.Z(:,ip)/1e3,'r--');
+%plot(R(ip).Ret_Q_kgkg,X.Z(:,ip)/1e3,'k',[Ret_Q_kgkg(:,ip)-A(ip).QTotErr/2 R(ip).Ret_Q_kgkg+A(ip).QTotErr/2],X.Z(:,ip)/1e3,'r:');
 xlabel('Q [kg/kg]','FontSize',16); ylim([0 10]); grid on;
 ylabel('Height [km asl]','FontSize',16); 
 ylim([0 10]); grid on;
 set(gca,'FontSize',16)
+legend('Rand','Syst');
+title(['1DVAR Ret Q (' C.station ') ' datestr( datenum([C.day_one])+O.time(R(1).nobs_tbs)/3600/24 )]);
 saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_Q' dateone],'png');
 
+figure; % Absolute humidity (kg/m3) 
+errorbar(Qa,X.Z(:,ip)/1e3,QTotErr,'k','horizontal'); hold on;
+plot([Qa-QSysUnc Qa+QSysUnc],X.Z(:,ip)/1e3,'r--');
+xlabel('Q [kg/m^3]','FontSize',16); ylim([0 10]); grid on;
+ylabel('Height [km asl]','FontSize',16); 
+ylim([0 10]); grid on;
+set(gca,'FontSize',16)
+legend('Rand','Syst');
+title(['1DVAR Ret Abs Hum (' C.station ') ' datestr( datenum([C.day_one])+O.time(R(1).nobs_tbs)/3600/24 )]);
+saveas(gcf,[C.FIGSpath 'ERROR/1DVAR_Ret_err_prof_Prof_AbsHum' dateone],'png');
 
-
-% From Pauline %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+       
 %%%PLOT AVERAGING KERNEL
 if C.retrieve_T
    figure;
